@@ -1,0 +1,12 @@
+
+pkg/man
+pkg/src/*.so
+pkg/src/*.o
+
+output/*
+
+.Rproj.user
+*.Rproj
+
+
+
