@@ -85,6 +85,51 @@ impute_const <- function(data, x, ...){
   data
 }
 
+
+
+#' @rdname impute_lm
+#' @export
+impute_median <- function(data, x, ...){
+  impute_median_base(data,x,...)
+  # TODO: conditional on presence of dplyr, use summarise_
+}
+
+
+impute_median_base <- function(data,x,...){
+  predicted <- get_predicted(x,names(data))
+  predictors <- get_predictors(x,names(data))
+  if (length(predictors) == 0){
+    for (p in predicted){
+      ina <- is.na(data[p])
+      data[ina,p] <- median(data[p],na.rm=TRUE)
+    }
+    return(data)
+  }
+  by <- as.list(data[predictors])
+  medians <- stats::aggregate(data[predicted],by=by, FUN=median, na.rm=TRUE)
+  imp <- merge(data[predictors],medians,all.x=TRUE,all.y=FALSE)
+  for ( p in predicted ){
+    ina <- is.na(data[p])
+    data[ina,p] <- imp[ina,p]
+  }
+  data
+}
+
+
+
+
+
+get_predictors <- function(frm, vars){
+  v <- all.vars(frm[[3]])
+  w <-v[!v %in% vars]
+  if( length(w) > 0)
+    stop(sprintf("Predictors %s not found in data",paste(w,collapse=", ")))
+  v
+}
+
+
+
+
 # frm: a formula
 # vars: variable names
 get_predicted <- function(frm, vars){
@@ -96,13 +141,16 @@ get_predicted <- function(frm, vars){
   }
   if (any(v %in% w))
     stop(sprintf("Using '%s' as predictor and predicted"
-        , paste(v,collapse="0")))
+                  , paste(v,collapse=", ")), call.=FALSE)
   w <- v[!v %in% vars]
   if (length(w)>0)
-    stop(sprintf("Trying to impute variables not in data: %s",paste(w,collapse=", ")))
+    stop(sprintf("Trying to impute variables not in data: %s"
+                 ,paste(w,collapse=", ")), call.=FALSE)
   # TODO: allow '.' and minus signs
   v
 }
+
+
 
 
 # TODO:
