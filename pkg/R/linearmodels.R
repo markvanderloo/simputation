@@ -1,5 +1,5 @@
 
-#' Linear regression imutation
+#' Impute missing data
 #'
 #' Use to fit and impute missing data.
 #'
@@ -36,7 +36,8 @@
 # # impute both Sepal.Length and Sepal.Width, using robust imputation
 # i2 <- impute_lm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
 #' 
-#' 
+#' @name impute_
+#' @rdname impute_ 
 #' @export
 impute_lm <- function(data, x, ...){
   stopifnot(inherits(x,"formula"))
@@ -54,8 +55,7 @@ impute_lm <- function(data, x, ...){
 }
 
 
-#' @rdname impute_lm
-#' @export
+#' @rdname impute_
 impute_rlm <- function(data, x, ...){
   stopifnot(inherits(x,"formula"))
   predicted <- get_predicted(x,names(data))
@@ -72,7 +72,7 @@ impute_rlm <- function(data, x, ...){
 }
 
 
-#' @rdname impute_lm
+#' @rdname impute_
 impute_const <- function(data, x, ...){
   stopifnot(inherits(x,"formula"))
   if (length(x[[3]]) != 1)
@@ -94,7 +94,7 @@ impute_const <- function(data, x, ...){
 
 
 
-#' @rdname impute_lm
+#' @rdname impute_
 #' @export
 impute_median <- function(data, x, ...){
   impute_median_base(data,x,...)
@@ -123,7 +123,19 @@ impute_median_base <- function(data,x,...){
   data
 }
 
-
+#' @rdname impute_
+impute_proxy <- function(data, x, ...){
+  predicted <- get_predicted(x,names(data))
+  predictor <- get_predictors(x, names(data))
+  if( length(predictor) != 1 )
+    stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )
+  
+  for ( p in predicted){
+    ina <- is.na(data[,p])
+    data[ina,p] <- data[ina,predictor]
+  }
+  data
+}
 
 
 

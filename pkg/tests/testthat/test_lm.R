@@ -24,7 +24,10 @@ test_that("stuff gets imputed",{
     # impute all variables, constant models
     expect_equal(sum(is.na(f(irisNA, . ~ 1))),  0)
   }
-  
+  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width))), 7)  
+  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width))),3)
+  expect_error(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width + Petal.Length)
+               ,regex="Need")
 })
 
 # o <- impute_lm(irisNA,Sepal.Length ~ 1)
