@@ -1,3 +1,3 @@
-#if ( require(testthat) ) test_check("simputation")
+if ( require(testthat) ) test_check("simputation")
 
 

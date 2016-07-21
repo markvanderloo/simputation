@@ -40,7 +40,7 @@
 #' @export
 impute_lm <- function(data, x, ...){
   stopifnot(inherits(x,"formula"))
-  predicted <- all.vars(x[[2]])
+  predicted <- get_predicted(x, names(data))
   formulas <- paste(predicted, "~" ,deparse(x[[3]]) )  
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
@@ -68,6 +68,42 @@ impute_rlm <- function(data, x, ...){
   }
   data
 }
+
+
+#' @rdname impute_lm
+impute_const <- function(data, x, ...){
+  stopifnot(inherits(x,"formula"))
+  if (length(x[[3]]) != 1)
+    stop(sprintf("Expected constant, got '%s'",deparse(x[[3]])))
+  const <- as.numeric(deparse(x[[3]]))
+  if (is.na(const)) const <- deparse(x[[3]])
+  predicted <- all.vars(x[[2]])
+  for ( p in predicted ){
+    ina <- is.na(data[p])
+    data[ina,p] <- const
+  }
+  data
+}
+
+# frm: a formula
+# vars: variable names
+get_predicted <- function(frm, vars){
+  v <- all.vars(frm[[2]])
+  w <- all.vars(frm[[3]])
+  if ( identical(v , ".") ){ 
+    v <- vars
+    v <- setdiff(v,w)
+  }
+  if (any(v %in% w))
+    stop(sprintf("Using '%s' as predictor and predicted"
+        , paste(v,collapse="0")))
+  w <- v[!v %in% vars]
+  if (length(w)>0)
+    stop(sprintf("Trying to impute variables not in data: %s",paste(w,collapse=", ")))
+  # TODO: allow '.' and minus signs
+  v
+}
+
 
 # TODO:
 # impute_median
