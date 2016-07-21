@@ -41,10 +41,11 @@
 impute_lm <- function(data, x, ...){
   stopifnot(inherits(x,"formula"))
   predicted <- get_predicted(x, names(data))
-  formulas <- paste(predicted, "~" ,deparse(x[[3]]) )  
+  predicted <- predicted[sapply(data[predicted], is.numeric)]
+    formulas <- paste(predicted, "~" ,deparse(x[[3]]) )  
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
-    ina <- is.na(data[p])
+    ina <- is.na(data[,p])
     if (!any(ina)) next # skip if no missings
     m <- stats::lm(as.formula(formulas[i]), data=data, ...)
     data[ina, p] <- stats::predict(m, newdata=data[ina,,drop=FALSE])
@@ -57,11 +58,12 @@ impute_lm <- function(data, x, ...){
 #' @export
 impute_rlm <- function(data, x, ...){
   stopifnot(inherits(x,"formula"))
-  predicted <- all.vars(x[[2]])
+  predicted <- get_predicted(x,names(data))
+  predicted <- predicted[sapply(data[predicted], is.numeric)]
   formulas <- paste(predicted, "~" ,deparse(x[[3]]) )  
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
-    ina <- is.na(data[p])
+    ina <- is.na(data[,p])
     if (!any(ina)) next # skip if no missings
     m <- MASS::rlm(as.formula(formulas[i]), data=data, ...)
     data[ina, p] <- stats::predict(m, newdata=data[ina,,drop=FALSE])
@@ -77,10 +79,15 @@ impute_const <- function(data, x, ...){
     stop(sprintf("Expected constant, got '%s'",deparse(x[[3]])))
   const <- as.numeric(deparse(x[[3]]))
   if (is.na(const)) const <- deparse(x[[3]])
-  predicted <- all.vars(x[[2]])
+  predicted <- get_predicted(x,names(data))
   for ( p in predicted ){
     ina <- is.na(data[p])
-    data[ina,p] <- const
+    # prevent conversion to NA from popping up 
+    # (we replace NA with NA in that case) 
+    tryCatch(
+      data[ina,p] <- const,silent=TRUE
+             , warning=function(w){}
+      )
   }
   data
 }
@@ -97,16 +104,17 @@ impute_median <- function(data, x, ...){
 
 impute_median_base <- function(data,x,...){
   predicted <- get_predicted(x,names(data))
+  predicted <- predicted[sapply(data[predicted], is.numeric)]
   predictors <- get_predictors(x,names(data))
   if (length(predictors) == 0){
     for (p in predicted){
       ina <- is.na(data[p])
-      data[ina,p] <- median(data[p],na.rm=TRUE)
+      data[ina,p] <- stats::median(data[,p],na.rm=TRUE)
     }
     return(data)
   }
   by <- as.list(data[predictors])
-  medians <- stats::aggregate(data[predicted],by=by, FUN=median, na.rm=TRUE)
+  medians <- stats::aggregate(data[predicted],by=by, FUN=stats::median, na.rm=TRUE)
   imp <- merge(data[predictors],medians,all.x=TRUE,all.y=FALSE)
   for ( p in predicted ){
     ina <- is.na(data[p])

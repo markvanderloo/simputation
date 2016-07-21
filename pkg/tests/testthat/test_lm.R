@@ -9,3 +9,31 @@ test_that("formula parsing",{
   expect_error(get_predictors( x ~ y, "x"),regexp="not found")
 })
 
+context("Imputation")
+test_that("stuff gets imputed",{
+  funs <- list(impute_lm, impute_rlm, impute_const, impute_median)
+  irisNA <- iris
+  irisNA[1:3,"Sepal.Length"] <- NA
+  irisNA[3:5,"Sepal.Width"] <- NA
+  irisNA[5:7,"Petal.Length"] <- NA
+  for (f in funs){
+    # impute one variable, constant models
+    expect_equal(sum(is.na(f(irisNA,Sepal.Length ~ 1))),  6)
+    # impute two variables, constant models
+    expect_equal(sum(is.na(f(irisNA,Sepal.Length + Sepal.Width ~ 1))),  3)
+    # impute all variables, constant models
+    expect_equal(sum(is.na(f(irisNA, . ~ 1))),  0)
+  }
+  
+})
+
+# o <- impute_lm(irisNA,Sepal.Length ~ 1)
+# o <- impute_rlm(irisNA,. ~ 1)
+# o <- impute_const(irisNA,. ~ 1)
+# o <- impute_median(irisNA,. ~ 1)
+# 
+# 
+ # o <- impute_lm(irisNA,. ~ 1)
+ # o <- impute_rlm(irisNA,. ~ 1)
+ # o <- impute_const(irisNA,. ~ 1)
+ # o <- impute_median(irisNA,. ~ 1)
