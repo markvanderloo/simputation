@@ -4,7 +4,12 @@
 #' Use to fit and impute missing data.
 #'
 #' @param data The data
-#' @param model a \code{\link[stats]{formula}} object.
+#' @param model \code{[formula]} imputation model description (see Details below).
+#' @param add_residual \code{[character]} Type of residual to add. \code{"normal"} 
+#'   means that the imputed value is drawn from \code{N(mu,sd)} where \code{mu}
+#'   and \code{sd} are estimated from the model's residuals (\code{mu} should equal
+#'   zero in most cases). If \code{add_residual = "observed"}, residuals are drawn
+#'   (with replacement) from the model's residuals.
 #' @param ... further arguments passed to \code{\link[stats]{lm}} or \code{\link{rlm}}
 #' 
 #' @section Details:
@@ -17,11 +22,24 @@
 #' If a value cannot be imputed because one of its predictors is missing, the value will
 #' remain missing after imputation.
 #' 
+#' If a model cannot be fitted, e.g. because the imputed model is missing, a warning
+#' is emitted and fot htat variable no imputation will take place.
 #' 
-#' @references 
 #' 
-#' Linear models are fit with the \code{stats::lm} function. Robust linear models
-#' are fit with \code{MASS::rlm}.
+#' @section Model descriptions:
+#' 
+#' \tabular{ll}{
+#' \bold{Model} \tab \bold{description}\cr
+#' \code{impute_lm} \tab Use \code{stats::lm} to train the imputation model.\cr
+#' \code{impute_rlm} \tab Use \code{MASS::rlm} to train the imputation model.\cr
+#' \code{impute_median} \tab Median imputation. Predictors are treated
+#'    as grouping variables for computing medians.\cr
+#' \code{impute_const} \tab Impute a constant value \cr
+#' \code{impute_proxy} \tab Copy a value from the predictor variable.
+#' }
+#'
+#' @return \code{data}, imputed according to \code{model}.
+#' 
 #' 
 #' @examples
 #' 
@@ -33,8 +51,8 @@
 #' # impute a single variable (Sepal.Length)
 #' i1 <- impute_lm(irisNA, Sepal.Length ~ Sepal.Width + Species)
 #' 
-#' # impute both Sepal.Length and Sepal.Width, using robust imputation
-#' i2 <- impute_lm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
+#' # impute both Sepal.Length and Sepal.Width, using robust linear regression
+#' i2 <- impute_rlm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
 #' 
 #' @name impute_
 #' @rdname impute_ 
@@ -109,14 +127,6 @@ impute_const <- function(data, model, add_residual = c("none","observed","normal
 }
 
 
-get_res <- function(nmiss, residuals, type){
-  switch(type
-    , none = rep(0,nmiss)
-    , observed = sample(x = residuals, size=nmiss, replace=TRUE)
-    , normal = rnorm(n=nmiss, mean=mean(residuals), sd=sd(residuals))
-  )
-}
-
 
 #' @rdname impute_
 #' @export
@@ -151,7 +161,10 @@ impute_median <- function(data, model, add_residual = c("none","observed","norma
 }
 
 #' @rdname impute_
-impute_proxy <- function(data, model, ...){
+impute_proxy <- function(data, model, add_residual = c("none","observed","normal"),...){
+  stopifnot(inherits(model,"formula"))
+  add_residual <- match.arg(add_residual)
+  
   predicted <- get_predicted(model,names(data))
   predictor <- get_predictors(model, names(data))
   if( length(predictor) != 1 )
@@ -159,9 +172,21 @@ impute_proxy <- function(data, model, ...){
   
   for ( p in predicted){
     ina <- is.na(data[,p])
-    data[ina,p] <- data[ina,predictor]
+    data[ina,p] <- data[ina,predictor] + 
+      get_res(sum(ina), data[!ina,predictor] - data[!ina,p], type=add_residual)
   }
   data
+}
+
+
+
+
+get_res <- function(nmiss, residuals, type){
+  switch(type
+     , none = rep(0,nmiss)
+     , observed = sample(x = residuals, size=nmiss, replace=TRUE)
+     , normal = rnorm(n=nmiss, mean=mean(residuals), sd=sd(residuals))
+  )
 }
 
 

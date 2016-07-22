@@ -35,6 +35,9 @@ test_that("stuff gets imputed",{
   
   expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width))), 7)  
   expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width))),3)
+  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width, add_residual="normal"))),3)
+  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width, add_residual="observed"))),3)
+  
   expect_error(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width + Petal.Length)
                ,regex="Need")
   # Try imputing a column where everything is missing (so models don't fit)
@@ -54,6 +57,7 @@ test_that("stuff gets imputed",{
 # o <- impute_rlm(irisNA,. ~ 1,add_residual = "normal")
 # o <- impute_const(irisNA,. ~ 1,add_residual = "normal")
 # o <- impute_median(irisNA,Sepal.Width ~ 1,add_residual = "normal")
+# o <- impute_proxy(irisNA,Sepal.Width ~ Sepal.Length,add_residual = "normal")
 
  
 # 
