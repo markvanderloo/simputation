@@ -4,7 +4,7 @@
 #' Use to fit and impute missing data.
 #'
 #' @param data The data
-#' @param x a \code{\link[stats]{formula}} object.
+#' @param model a \code{\link[stats]{formula}} object.
 #' @param ... further arguments passed to \code{\link[stats]{lm}} or \code{\link{rlm}}
 #' 
 #' @section Details:
@@ -39,11 +39,11 @@
 #' @name impute_
 #' @rdname impute_ 
 #' @export
-impute_lm <- function(data, x, ...){
-  stopifnot(inherits(x,"formula"))
-  predicted <- get_predicted(x, names(data))
+impute_lm <- function(data, model, ...){
+  stopifnot(inherits(model,"formula"))
+  predicted <- get_predicted(model, names(data))
   predicted <- predicted[sapply(data[predicted], is.numeric)]
-    formulas <- paste(predicted, "~" ,deparse(x[[3]]) )  
+    formulas <- paste(predicted, "~" ,deparse(model[[3]]) )  
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
     ina <- is.na(data[,p])
@@ -56,11 +56,11 @@ impute_lm <- function(data, x, ...){
 
 
 #' @rdname impute_
-impute_rlm <- function(data, x, ...){
-  stopifnot(inherits(x,"formula"))
-  predicted <- get_predicted(x,names(data))
+impute_rlm <- function(data, model, ...){
+  stopifnot(inherits(model,"formula"))
+  predicted <- get_predicted(model,names(data))
   predicted <- predicted[sapply(data[predicted], is.numeric)]
-  formulas <- paste(predicted, "~" ,deparse(x[[3]]) )  
+  formulas <- paste(predicted, "~" ,deparse(model[[3]]) )  
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
     ina <- is.na(data[,p])
@@ -73,13 +73,13 @@ impute_rlm <- function(data, x, ...){
 
 
 #' @rdname impute_
-impute_const <- function(data, x, ...){
-  stopifnot(inherits(x,"formula"))
-  if (length(x[[3]]) != 1)
-    stop(sprintf("Expected constant, got '%s'",deparse(x[[3]])))
-  const <- as.numeric(deparse(x[[3]]))
-  if (is.na(const)) const <- deparse(x[[3]])
-  predicted <- get_predicted(x,names(data))
+impute_const <- function(data, model, ...){
+  stopifnot(inherits(model,"formula"))
+  if (length(model[[3]]) != 1)
+    stop(sprintf("Emodelpected constant, got '%s'",deparse(model[[3]])))
+  const <- as.numeric(deparse(model[[3]]))
+  if (is.na(const)) const <- deparse(model[[3]])
+  predicted <- get_predicted(model,names(data))
   for ( p in predicted ){
     ina <- is.na(data[p])
     # prevent conversion to NA from popping up 
@@ -96,16 +96,16 @@ impute_const <- function(data, x, ...){
 
 #' @rdname impute_
 #' @export
-impute_median <- function(data, x, ...){
-  impute_median_base(data,x,...)
+impute_median <- function(data, model, ...){
+  impute_median_base(data,model,...)
   # TODO: conditional on presence of dplyr, use summarise_
 }
 
 
-impute_median_base <- function(data,x,...){
-  predicted <- get_predicted(x,names(data))
+impute_median_base <- function(data,model,...){
+  predicted <- get_predicted(model,names(data))
   predicted <- predicted[sapply(data[predicted], is.numeric)]
-  predictors <- get_predictors(x,names(data))
+  predictors <- get_predictors(model,names(data))
   if (length(predictors) == 0){
     for (p in predicted){
       ina <- is.na(data[p])
@@ -124,9 +124,9 @@ impute_median_base <- function(data,x,...){
 }
 
 #' @rdname impute_
-impute_proxy <- function(data, x, ...){
-  predicted <- get_predicted(x,names(data))
-  predictor <- get_predictors(x, names(data))
+impute_proxy <- function(data, model, ...){
+  predicted <- get_predicted(model,names(data))
+  predictor <- get_predictors(model, names(data))
   if( length(predictor) != 1 )
     stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )
   
@@ -173,7 +173,3 @@ get_predicted <- function(frm, vars){
 
 
 
-# TODO:
-# impute_median
-# impute_const
-# ...

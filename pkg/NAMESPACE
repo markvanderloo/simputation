@@ -2,7 +2,6 @@
 
 export(impute_lm)
 export(impute_median)
-export(impute_rlm)
 importFrom(MASS,rlm)
 importFrom(stats,as.formula)
 importFrom(stats,lm)
