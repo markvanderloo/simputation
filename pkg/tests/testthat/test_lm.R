@@ -32,11 +32,21 @@ test_that("stuff gets imputed",{
     expect_equal(sum(is.na(f(irisNA, . ~ 1, add_residual="normal"))),  0,info=fun)
     expect_equal(sum(is.na(f(irisNA, . ~ 1, add_residual="observed"))),  0,info=fun)
   }
-  
-  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width))), 7)  
-  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width))),3)
-  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width, add_residual="normal"))),3)
-  expect_equal(sum(is.na(impute_proxy(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width, add_residual="observed"))),3)
+
+  funs <- list(impute_lm = impute_lm
+               , impute_rlm = impute_rlm
+               , impute_cart = impute_cart
+               , impute_proxy = impute_proxy)
+  for ( i in seq_along(funs) ){
+    fn <- funs[[i]]
+    nm <- names(funs)[i]
+    out <- if (nm == "impute_cart") 6 else 7 # cart is more robust for missing predictors
+    expect_equal(sum(is.na(fn(irisNA, Sepal.Length ~ Sepal.Width))), out, info=nm)  
+    expect_equal(sum(is.na(fn(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width))),3,info=nm)
+    expect_equal(sum(is.na(fn(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width, add_residual="normal"))),3,info=nm)
+    expect_equal(sum(is.na(fn(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width, add_residual="observed"))),3,info=nm)
+    
+  }
   
   expect_error(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width + Petal.Length)
                ,regex="Need")
@@ -48,7 +58,7 @@ test_that("stuff gets imputed",{
   
 })
 
- # o <- impute_lm(irisNA,Sepal.Length ~ 1)
+# o <- impute_cart(irisNA,Sepal.Length ~ 1)
  # o <- impute_rlm(irisNA,. ~ 1)
  # o <- impute_const(irisNA,. ~ 1)
  # o <- impute_median(irisNA,. ~ 1)

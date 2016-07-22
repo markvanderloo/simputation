@@ -9,7 +9,8 @@
 #'   means that the imputed value is drawn from \code{N(mu,sd)} where \code{mu}
 #'   and \code{sd} are estimated from the model's residuals (\code{mu} should equal
 #'   zero in most cases). If \code{add_residual = "observed"}, residuals are drawn
-#'   (with replacement) from the model's residuals.
+#'   (with replacement) from the model's residuals. Ignored for non-numeric 
+#'   predicted variables.
 #' @param ... further arguments passed to \code{\link[stats]{lm}} or \code{\link{rlm}}
 #' 
 #' @section Details:
@@ -35,7 +36,8 @@
 #' \code{impute_median} \tab Median imputation. Predictors are treated
 #'    as grouping variables for computing medians.\cr
 #' \code{impute_const} \tab Impute a constant value \cr
-#' \code{impute_proxy} \tab Copy a value from the predictor variable.
+#' \code{impute_proxy} \tab Copy a value from the predictor variable.\cr
+#' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model. 
 #' }
 #'
 #' @return \code{data}, imputed according to \code{model}.
@@ -67,6 +69,8 @@ impute_rlm <- function(data, model, add_residual = c("none","observed","normal")
   add_residual <- match.arg(add_residual)
   lmwork(data=data, model=model, add_residual=add_residual, fun=MASS::rlm, ...)  
 }
+
+
 
 lmwork <- function(data, model, add_residual, fun, ...){
   stopifnot(inherits(model,"formula"))
