@@ -61,69 +61,91 @@ lmwork <- function(data, model, add_residual, fun, ...){
     p <- predicted[i]
     ina <- is.na(data[,p])
     nmiss <- sum(ina)
-    if (!any(ina)) next # skip if no missings
-    m <- fun(as.formula(formulas[i]), data=data, ...)
-    res <- switch(add_residual
-                  , none = rep(0, nmiss)
-                  , observed = sample(residuals(m),size = nmiss, replace=TRUE)
-                  , normal = rnorm(n=nmiss, mean=0, sd=sd(residuals(m)))
-                )
-    data[ina, p] <- stats::predict(m, newdata=data[ina,,drop=FALSE]) + res
+    if (!any(ina) ) next # skip if no missings
+    m <- tryCatch(fun(as.formula(formulas[i]), data=data, ...)
+          , error=function(e){
+            warning(sprintf("Could not fit model for '%s' because %s\n",p,e$message),call.=FALSE)
+            structure(NA,class="dummymodel")
+          })
+    res <- get_res(nmiss = sum(ina), residuals = residuals(m), type = add_residual)
+    data[ina, p] <- stats::predict(m, newdata = data[ina,,drop=FALSE]) + res
   }
   data
   
 }
 
-
-
+predict.dummymodel <- function(object,...) NA
+residuals.dummymodel <- function(object,...) NA
 
 #' @rdname impute_
-impute_const <- function(data, model, ...){
+impute_const <- function(data, model, add_residual = c("none","observed","normal"),...){
   stopifnot(inherits(model,"formula"))
+  add_residual <- match.arg(add_residual)
+  
   if (length(model[[3]]) != 1)
     stop(sprintf("Emodelpected constant, got '%s'",deparse(model[[3]])))
   const <- as.numeric(deparse(model[[3]]))
+  
   if (is.na(const)) const <- deparse(model[[3]])
   predicted <- get_predicted(model,names(data))
   for ( p in predicted ){
     ina <- is.na(data[p])
-    # prevent conversion to NA from popping up 
-    # (we replace NA with NA in that case) 
+    nmiss <- sum(ina)
+    # prevent conversion of constant to NA from popping up: we just replace NA 
+    # with NA in that case.
     tryCatch(
-      data[ina,p] <- const,silent=TRUE
-             , warning=function(w){}
-      )
+      data[ina,p] <- if ( add_residual == "none" ){
+        const
+      } else if (nmiss == 0){
+        warning("All values missing, so no random residuals added")
+        const
+      } else {
+        const + get_res(nmiss=nmiss, residuals=const-data[!ina,p], type=add_residual)
+      }
+      , warning=function(w){}
+    )
   }
   data
 }
 
 
-
-#' @rdname impute_
-#' @export
-impute_median <- function(data, model, ...){
-  impute_median_base(data,model,...)
-  # TODO: conditional on presence of dplyr, use summarise_
+get_res <- function(nmiss, residuals, type){
+  switch(type
+    , none = rep(0,nmiss)
+    , observed = sample(x = residuals, size=nmiss, replace=TRUE)
+    , normal = rnorm(n=nmiss, mean=mean(residuals), sd=sd(residuals))
+  )
 }
 
 
-impute_median_base <- function(data,model,...){
+#' @rdname impute_
+#' @export
+impute_median <- function(data, model, add_residual = c("none","observed","normal"), ...){
+  stopifnot(inherits(model,"formula"))
+  add_residual <- match.arg(add_residual)
+  
   predicted <- get_predicted(model,names(data))
   predicted <- predicted[sapply(data[predicted], is.numeric)]
   predictors <- get_predictors(model,names(data))
-  if (length(predictors) == 0){
-    for (p in predicted){
-      ina <- is.na(data[p])
-      data[ina,p] <- stats::median(data[,p],na.rm=TRUE)
-    }
-    return(data)
-  }
-  by <- as.list(data[predictors])
-  medians <- stats::aggregate(data[predicted],by=by, FUN=stats::median, na.rm=TRUE)
-  imp <- merge(data[predictors],medians,all.x=TRUE,all.y=FALSE)
+  
+  # compute model values
+  by <- if (length(predictors) == 0) list(rep(1,nrow(data))) else as.list(data[predictors])
+  # silence the warning about producing NA's (give specific warning later)
+  medians <- withCallingHandlers(
+    stats::aggregate(data[predicted],by=by, FUN=stats::median, na.rm=TRUE)
+    , warning=function(w) invokeRestart("muffleWarning") 
+  )
+  # create nrow(data) X npredictors data.frame with model values.
+  imp <- if (length(predictors) == 0) 
+    cbind(by[[1]], medians) # about 75 times faster than merge
+  else 
+    merge(data[predictors], medians, all.x=TRUE, all.y=FALSE)
+  
   for ( p in predicted ){
+    if (is.na(medians[1,p]))
+      warning(sprintf("Could not compute predictor for %s, imputing NA",p))
     ina <- is.na(data[p])
-    data[ina,p] <- imp[ina,p]
+    data[ina,p] <- imp[ina,p] + get_res(nmiss=sum(ina), residuals=imp[!ina,p]-data[!ina,p], type=add_residual)
   }
   data
 }
