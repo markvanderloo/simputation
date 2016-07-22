@@ -26,50 +26,55 @@
 #' @examples
 #' 
 #' data(iris)
-# irisNA <- iris
-# irisNA[1:4, "Sepal.Length"] <- NA
-# irisNA[3:7, "Sepal.Width"] <- NA
-# 
-# # impute a single variable (Sepal.Length)
-# i1 <- impute_lm(irisNA, Sepal.Length ~ Sepal.Width + Species)
-# 
-# # impute both Sepal.Length and Sepal.Width, using robust imputation
-# i2 <- impute_lm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
+#' irisNA <- iris
+#' irisNA[1:4, "Sepal.Length"] <- NA
+#' irisNA[3:7, "Sepal.Width"] <- NA
+#' 
+#' # impute a single variable (Sepal.Length)
+#' i1 <- impute_lm(irisNA, Sepal.Length ~ Sepal.Width + Species)
+#' 
+#' # impute both Sepal.Length and Sepal.Width, using robust imputation
+#' i2 <- impute_lm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
 #' 
 #' @name impute_
 #' @rdname impute_ 
 #' @export
-impute_lm <- function(data, model, ...){
-  stopifnot(inherits(model,"formula"))
-  predicted <- get_predicted(model, names(data))
-  predicted <- predicted[sapply(data[predicted], is.numeric)]
-    formulas <- paste(predicted, "~" ,deparse(model[[3]]) )  
-  for ( i in seq_along(predicted) ){
-    p <- predicted[i]
-    ina <- is.na(data[,p])
-    if (!any(ina)) next # skip if no missings
-    m <- stats::lm(as.formula(formulas[i]), data=data, ...)
-    data[ina, p] <- stats::predict(m, newdata=data[ina,,drop=FALSE])
-  }
-  data
+impute_lm <- function(data, model, add_residual = c("none","observed","normal"), ...){
+  add_residual <- match.arg(add_residual)
+  lmwork(data=data, model=model, add_residual=add_residual, fun=stats::lm, ...)  
 }
-
 
 #' @rdname impute_
-impute_rlm <- function(data, model, ...){
+impute_rlm <- function(data, model, add_residual = c("none","observed","normal"), ...){
+  add_residual <- match.arg(add_residual)
+  lmwork(data=data, model=model, add_residual=add_residual, fun=MASS::rlm, ...)  
+}
+
+lmwork <- function(data, model, add_residual, fun, ...){
   stopifnot(inherits(model,"formula"))
-  predicted <- get_predicted(model,names(data))
+
+  predicted <- get_predicted(model, names(data))
   predicted <- predicted[sapply(data[predicted], is.numeric)]
-  formulas <- paste(predicted, "~" ,deparse(model[[3]]) )  
+  formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
+  
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
     ina <- is.na(data[,p])
+    nmiss <- sum(ina)
     if (!any(ina)) next # skip if no missings
-    m <- MASS::rlm(as.formula(formulas[i]), data=data, ...)
-    data[ina, p] <- stats::predict(m, newdata=data[ina,,drop=FALSE])
+    m <- fun(as.formula(formulas[i]), data=data, ...)
+    res <- switch(add_residual
+                  , none = rep(0, nmiss)
+                  , observed = sample(residuals(m),size = nmiss, replace=TRUE)
+                  , normal = rnorm(n=nmiss, mean=0, sd=sd(residuals(m)))
+                )
+    data[ina, p] <- stats::predict(m, newdata=data[ina,,drop=FALSE]) + res
   }
   data
+  
 }
+
+
 
 
 #' @rdname impute_

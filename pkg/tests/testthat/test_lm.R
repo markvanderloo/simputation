@@ -30,11 +30,11 @@ test_that("stuff gets imputed",{
                ,regex="Need")
 })
 
-# o <- impute_lm(irisNA,Sepal.Length ~ 1)
-# o <- impute_rlm(irisNA,. ~ 1)
-# o <- impute_const(irisNA,. ~ 1)
-# o <- impute_median(irisNA,. ~ 1)
-# 
+ # o <- impute_lm(irisNA,Sepal.Length ~ 1)
+ # o <- impute_rlm(irisNA,. ~ 1)
+ # o <- impute_const(irisNA,. ~ 1)
+ # o <- impute_median(irisNA,. ~ 1)
+ 
 # 
  # o <- impute_lm(irisNA,. ~ 1)
  # o <- impute_rlm(irisNA,. ~ 1)
