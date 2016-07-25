@@ -11,7 +11,8 @@
 #'   zero in most cases). If \code{add_residual = "observed"}, residuals are drawn
 #'   (with replacement) from the model's residuals. Ignored for non-numeric 
 #'   predicted variables.
-#' @param ... further arguments passed to \code{\link[stats]{lm}} or \code{\link{rlm}}
+#' @param ... further arguments passed to \code{\link[stats]{lm}}, \code{\link[MASS]{rlm}}
+#'   \code{\link[rpart]{rpart}}
 #' 
 #' @section Details:
 #' 
@@ -39,6 +40,11 @@
 #' \code{impute_proxy} \tab Copy a value from the predictor variable.\cr
 #' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model. 
 #' }
+#'
+#' @seealso 
+#' 
+#' \code{\link[stats]{lm}} \code{\link[MASS]{rlm}} \code{\link[rpart]{rpart}}
+#' \code{\link[party]{ctree}} 
 #'
 #' @return \code{data}, imputed according to \code{model}.
 #' 

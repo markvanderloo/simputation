@@ -26,3 +26,9 @@ worknl <- function(data, model, add_residual,...){
   }
   data
 }
+
+
+
+
+
+
