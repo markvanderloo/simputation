@@ -65,40 +65,39 @@
 #' @name impute_
 #' @rdname impute_ 
 #' @export
-impute_lm <- function(data, model, add_residual = c("none","observed","normal"), ...){
+impute_lm <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   add_residual <- match.arg(add_residual)
-  lmwork(data=data, model=model, add_residual=add_residual, fun=stats::lm, ...)  
+  lmwork(dat=dat, model=model, add_residual=add_residual, fun=stats::lm, ...)  
 }
 
 #' @rdname impute_
-impute_rlm <- function(data, model, add_residual = c("none","observed","normal"), ...){
+#' @export
+impute_rlm <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   add_residual <- match.arg(add_residual)
-  lmwork(data=data, model=model, add_residual=add_residual, fun=MASS::rlm, ...)  
+  lmwork(dat=dat, model=model, add_residual=add_residual, fun=MASS::rlm, ...)  
 }
 
-
-
-lmwork <- function(data, model, add_residual, fun, ...){
+lmwork <- function(dat, model, add_residual, fun, ...){
   stopifnot(inherits(model,"formula"))
 
-  predicted <- get_predicted(model, names(data))
-  predicted <- predicted[sapply(data[predicted], is.numeric)]
+  predicted <- get_predicted(model, names(dat))
+  predicted <- predicted[sapply(dat[predicted], is.numeric)]
   formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
   
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
-    ina <- is.na(data[,p])
+    ina <- is.na(dat[,p])
     nmiss <- sum(ina)
     if (!any(ina) ) next # skip if no missings
-    m <- tryCatch(fun(as.formula(formulas[i]), data=data, ...)
+    m <- tryCatch(fun(as.formula(formulas[i]), dat=dat, ...)
           , error=function(e){
             warning(sprintf("Could not fit model for '%s' because %s\n",p,e$message),call.=FALSE)
             structure(NA,class="dummymodel")
           })
     res <- get_res(nmiss = sum(ina), residuals = residuals(m), type = add_residual)
-    data[ina, p] <- stats::predict(m, newdata = data[ina,,drop=FALSE]) + res
+    dat[ina, p] <- stats::predict(m, newdat = dat[ina,,drop=FALSE]) + res
   }
-  data
+  dat
   
 }
 
@@ -106,7 +105,8 @@ predict.dummymodel <- function(object,...) NA
 residuals.dummymodel <- function(object,...) NA
 
 #' @rdname impute_
-impute_const <- function(data, model, add_residual = c("none","observed","normal"),...){
+#' @export
+impute_const <- function(dat, model, add_residual = c("none","observed","normal"),...){
   stopifnot(inherits(model,"formula"))
   add_residual <- match.arg(add_residual)
   
@@ -115,68 +115,72 @@ impute_const <- function(data, model, add_residual = c("none","observed","normal
   const <- as.numeric(deparse(model[[3]]))
   
   if (is.na(const)) const <- deparse(model[[3]])
-  predicted <- get_predicted(model,names(data))
+  predicted <- get_predicted(model,names(dat))
   for ( p in predicted ){
-    ina <- is.na(data[p])
+    ina <- is.na(dat[p])
     nmiss <- sum(ina)
     # prevent conversion of constant to NA from popping up: we just replace NA 
     # with NA in that case.
     tryCatch(
-      data[ina,p] <- if ( add_residual == "none" ){
+      dat[ina,p] <- if ( add_residual == "none" ){
         const
       } else if (nmiss == 0){
         warning("All values missing, so no random residuals added")
         const
       } else {
-        const + get_res(nmiss=nmiss, residuals=const-data[!ina,p], type=add_residual)
+        const + get_res(nmiss=nmiss, residuals=const-dat[!ina,p], type=add_residual)
       }
       , warning=function(w){}
     )
   }
-  data
+  dat
 }
 
 
 
 #' @rdname impute_
 #' @export
-impute_median <- function(data, model, add_residual = c("none","observed","normal"), ...){
+impute_median <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(model,"formula"))
   add_residual <- match.arg(add_residual)
   
-  predicted <- get_predicted(model,names(data))
-  predicted <- predicted[sapply(data[predicted], is.numeric)]
-  predictors <- get_predictors(model,names(data))
+  predicted <- get_predicted(model,names(dat))
+  predicted <- predicted[sapply(dat[predicted], is.numeric)]
+  predictors <- get_predictors(model,names(dat))
   
   # compute model values
-  by <- if (length(predictors) == 0) list(rep(1,nrow(data))) else as.list(data[predictors])
+  by <- if (length(predictors) == 0) list(rep(1,nrow(dat))) else as.list(dat[predictors])
   # silence the warning about producing NA's (give specific warning later)
   medians <- withCallingHandlers(
-    stats::aggregate(data[predicted],by=by, FUN=stats::median, na.rm=TRUE)
+    stats::aggregate(dat[predicted],by=by, FUN=stats::median, na.rm=TRUE)
     , warning=function(w) invokeRestart("muffleWarning") 
   )
   # create nrow(data) X npredictors data.frame with model values.
   imp <- if (length(predictors) == 0) 
     cbind(by[[1]], medians) # about 75 times faster than merge
   else 
-    merge(data[predictors], medians, all.x=TRUE, all.y=FALSE)
+    merge(dat[predictors], medians, all.x=TRUE, all.y=FALSE)
   
   for ( p in predicted ){
     if (is.na(medians[1,p]))
       warning(sprintf("Could not compute predictor for %s, imputing NA",p))
-    ina <- is.na(data[p])
-    data[ina,p] <- imp[ina,p] + get_res(nmiss=sum(ina), residuals=imp[!ina,p]-data[!ina,p], type=add_residual)
+    ina <- is.na(dat[p])
+    dat[ina,p] <- imp[ina,p] + get_res(nmiss=sum(ina), residuals=imp[!ina,p]-dat[!ina,p], type=add_residual)
   }
-  data
+  dat
 }
 
+
+
+
+
 #' @rdname impute_
-impute_proxy <- function(data, model, add_residual = c("none","observed","normal"),...){
+#' @export
+impute_proxy <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(model,"formula"))
   add_residual <- match.arg(add_residual)
-  
-  predicted <- get_predicted(model,names(data))
-  predictor <- get_predictors(model, names(data))
+  predicted <- get_predicted(model,names(dat))
+  predictor <- get_predictors(model, names(dat))
   if( length(predictor) != 1 )
     stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )
   
@@ -185,7 +189,7 @@ impute_proxy <- function(data, model, add_residual = c("none","observed","normal
     data[ina,p] <- data[ina,predictor] + 
       get_res(sum(ina), data[!ina,predictor] - data[!ina,p], type=add_residual)
   }
-  data
+  dat
 }
 
 
@@ -231,7 +235,4 @@ get_predicted <- function(frm, vars){
   # TODO: allow '.' and minus signs
   v
 }
-
-
-
 
