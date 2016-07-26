@@ -185,9 +185,9 @@ impute_proxy <- function(dat, model, add_residual = c("none","observed","normal"
     stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )
   
   for ( p in predicted){
-    ina <- is.na(data[,p])
-    data[ina,p] <- data[ina,predictor] + 
-      get_res(sum(ina), data[!ina,predictor] - data[!ina,p], type=add_residual)
+    ina <- is.na(dat[,p])
+    dat[ina,p] <- dat[ina,predictor] + 
+      get_res(sum(ina), dat[!ina,predictor] - dat[!ina,p], type=add_residual)
   }
   dat
 }

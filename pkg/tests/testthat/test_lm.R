@@ -58,20 +58,3 @@ test_that("stuff gets imputed",{
   
 })
 
-# o <- impute_cart(irisNA,Sepal.Length ~ 1)
- # o <- impute_rlm(irisNA,. ~ 1)
- # o <- impute_const(irisNA,. ~ 1)
- # o <- impute_median(irisNA,. ~ 1)
-
-# o <- impute_lm(irisNA,Sepal.Length ~ 1,add_residual = "normal")
-# o <- impute_rlm(irisNA,. ~ 1,add_residual = "normal")
-# o <- impute_const(irisNA,. ~ 1,add_residual = "normal")
-# o <- impute_median(irisNA,Sepal.Width ~ 1,add_residual = "normal")
-# o <- impute_proxy(irisNA,Sepal.Width ~ Sepal.Length,add_residual = "normal")
-
- 
-# 
- # o <- impute_lm(irisNA,. ~ 1)
- # o <- impute_rlm(irisNA,. ~ 1)
- # o <- impute_const(irisNA,. ~ 1)
- # o <- impute_median(irisNA,. ~ 1)
