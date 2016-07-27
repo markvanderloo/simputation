@@ -3,7 +3,7 @@
 #'
 #' Use to fit and impute missing data.
 #'
-#' @param data The data
+#' @param dat A \code{data.frame}, with variables to be imputed
 #' @param model \code{[formula]} imputation model description (see Details below).
 #' @param add_residual \code{[character]} Type of residual to add. \code{"normal"} 
 #'   means that the imputed value is drawn from \code{N(mu,sd)} where \code{mu}
@@ -11,8 +11,12 @@
 #'   zero in most cases). If \code{add_residual = "observed"}, residuals are drawn
 #'   (with replacement) from the model's residuals. Ignored for non-numeric 
 #'   predicted variables.
-#' @param ... further arguments passed to \code{\link[stats]{lm}}, \code{\link[MASS]{rlm}}
-#'   \code{\link[rpart]{rpart}}
+#' @param ... further arguments passed to 
+#' \itemize{
+#' \item{\code{\link[stats]{lm}} for \code{impute_lm}}
+#' \item{\code{\link[MASS]{rlm}} for \code{impute_rlm}}
+#' \item{\code{\link[base]{order}} for \code{impute_shd}} 
+#' }
 #' 
 #' @section Details:
 #' 
@@ -218,14 +222,15 @@ get_predictors <- function(frm, vars){
 
 # frm: a formula
 # vars: variable names
-get_predicted <- function(frm, vars){
+# no_pp_overlap: check for overlap between predictors/predicted
+get_predicted <- function(frm, vars, no_pp_overlap=TRUE){
   v <- all.vars(frm[[2]])
   w <- all.vars(frm[[3]])
   if ( identical(v , ".") ){ 
     v <- vars
     v <- setdiff(v,w)
   }
-  if (any(v %in% w))
+  if (no_pp_overlap && any(v %in% w))
     stop(sprintf("Using '%s' as predictor and predicted"
                   , paste(v,collapse=", ")), call.=FALSE)
   w <- v[!v %in% vars]

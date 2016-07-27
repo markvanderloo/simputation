@@ -9,7 +9,7 @@ test_that("formula parsing",{
   expect_error(get_predictors( x ~ y, "x"),regexp="not found")
 })
 
-context("Imputation")
+context("Linear model imputation")
 test_that("stuff gets imputed",{
   funs <- list(impute_lm = impute_lm
                , impute_rlm = impute_rlm
