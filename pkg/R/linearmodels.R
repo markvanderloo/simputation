@@ -17,6 +17,7 @@
 #' \item{\code{\link[stats]{lm}} for \code{impute_lm}}
 #' \item{\code{\link[MASS]{rlm}} for \code{impute_rlm}}
 #' \item{\code{\link[base]{order}} for \code{impute_shd}} 
+#' \item{The \code{predictor} for \code{impute_pmm}}
 #' }
 #' 
 #' @section Details:
@@ -43,13 +44,16 @@
 #'    as grouping variables for computing medians.\cr
 #' \code{impute_const} \tab Impute a constant value \cr
 #' \code{impute_proxy} \tab Copy a value from the predictor variable.\cr
+#' \code{impute_rhd} \tab Random hot deck. Predictors are used to group the donors.\cr
+#' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data.\cr
+#'  \code{impute_pmm} \tab Predictive mean matching. \cr
 #' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model. 
 #' }
 #'
 #' @seealso 
 #' 
 #' \code{\link[stats]{lm}} \code{\link[MASS]{rlm}} \code{\link[rpart]{rpart}}
-#' \code{\link[party]{ctree}} 
+#' 
 #'
 #' @return \code{data}, imputed according to \code{model}.
 #' 
@@ -209,36 +213,4 @@ get_res <- function(nmiss, residuals, type){
 }
 
 
-
-get_predictors <- function(frm, vars){
-  v <- all.vars(frm[[3]])
-  w <-v[!v %in% vars]
-  if( length(w) > 0)
-    stop(sprintf("Predictors %s not found in data",paste(w,collapse=", ")))
-  v
-}
-
-
-
-
-# frm: a formula
-# vars: variable names
-# no_pp_overlap: check for overlap between predictors/predicted
-get_predicted <- function(frm, vars, no_pp_overlap=TRUE){
-  v <- all.vars(frm[[2]])
-  w <- all.vars(frm[[3]])
-  if ( identical(v , ".") ){ 
-    v <- vars
-    v <- setdiff(v,w)
-  }
-  if (no_pp_overlap && any(v %in% w))
-    stop(sprintf("Using '%s' as predictor and predicted"
-                  , paste(v,collapse=", ")), call.=FALSE)
-  w <- v[!v %in% vars]
-  if (length(w)>0)
-    stop(sprintf("Trying to impute variables not in data: %s"
-                 ,paste(w,collapse=", ")), call.=FALSE)
-  # TODO: allow '.' and minus signs
-  v
-}
 

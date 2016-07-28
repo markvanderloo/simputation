@@ -29,11 +29,6 @@ impute_rhd <- function(dat, model, pool=c("univariate","multivariate"), prob, ..
   dat
 }
 
-# A 'sample' with reasonable behaviour.
-isample <- function(x, size, replace=FALSE, prob=NULL){
-  if (length(x)==1) rep(x,size) else sample(x,size,replace,prob)
-}
-
 
 # random hot deck, column by column
 single_rhd <- function(x){
@@ -45,6 +40,7 @@ single_rhd <- function(x){
   x
 }
 
+# random hot deck, donors per missing data pattern.
 multi_rhd <- function(x){
   nvar <- length(x)
   M <- is.na(x)[,-nvar,drop=FALSE]
@@ -54,12 +50,12 @@ multi_rhd <- function(x){
   if ( nrow(mdp) == 0 ) return(x) # nothing to do..
   
   # donor pool for each missing data pattern
-  donor_pool <- apply(mdp,1,function(pat) complete.cases(x[pat]))
+  donor_pool <- iapply(mdp,1,function(pat) complete.cases(x[pat]))
   
   # recipient set for each missing data pattern
   M <- t(M)
   p <- nvar - 1 # number of actual variables (last is probability vector)
-  recipient_set <- apply(mdp,1,function(pat){
+  recipient_set <- iapply(mdp,1,function(pat){
     colSums(M==pat) == p
   })
   
@@ -72,25 +68,6 @@ multi_rhd <- function(x){
   }
   x
 }
-
-
-
-
-
-
-# random hot-deck, for each column
-# multi_rhd <- function(x){
-#   M <- is.na(x)
-#   mdp <- unique(M)  
-#   # find donor for everybody (allows for easy indexing in loop)
-#   idon <- sample(which(ic), size=nrow(x), replace=TRUE, prob=x[!ina, length(x)])
-#   for ( i in seq_along(x)){
-#     ina <- is.na(x[,i])
-#     if ( !any(ina) || all(ina) ) next
-#     x[ina,i] <- x[idon[ina],i]
-#   }
-#   x
-# }
 
 
 #' @rdname impute_
@@ -161,12 +138,12 @@ multi_shd <- function(x){
   if ( nrow(mdp) == 0 ) return(x) # nothing to do..
   
   # donor pool for each missing data pattern
-  donor_pool <- apply(mdp,1,function(pat) complete.cases(x[pat]))
+  donor_pool <- iapply(mdp,1,function(pat) complete.cases(x[pat]))
   
   # recipient set for eachmissing data pattern
   M <- t(M)
   nvar <- length(x)
-  recipient_set <- apply(mdp,1,function(pat){
+  recipient_set <- iapply(mdp,1,function(pat){
     colSums(M==pat) == nvar
   })
   
@@ -179,6 +156,32 @@ multi_shd <- function(x){
   }
   x
 }
+
+
+#' @rdname impute_
+#' @param predictor \code{[function]} Imputation to use for predictive part in predictive mean matching. Any 
+#'    of the \code{impute_} functions of this package.
+#' @export
+impute_pmm <- function(dat, model, predictor=impute_lm, ...){
+  
+  idat <- predictor(dat=dat,model=model,...)
+  predicted <- get_predicted(model,names(dat))
+  for ( p in predicted ){
+    don <- dat[!is.na(dat[,p]),p]
+    iimp <- is.na(dat[,p]) & !is.na(idat[,p])
+    if ( length(don)==0 || sum(iimp)==0) next # no donors, or nothing to impute
+    idat[iimp,p] <- .Call("pmm_impute_dbl",as.double(idat[iimp,p]),as.double(don))
+  } 
+  idat
+  
+}
+
+
+
+
+
+
+
 
 
 

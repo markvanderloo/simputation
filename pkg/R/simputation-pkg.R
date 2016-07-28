@@ -2,6 +2,8 @@
 #' 
 #' @name simputation
 #' @docType package
-#' @importFrom stats lm as.formula median
+#' @import  stats
 #' @importFrom MASS rlm 
 #' @importFrom rpart rpart 
+#' @useDynLib simputation 
+{}
