@@ -16,7 +16,7 @@ iapply <- function(X, MARGIN, FUN, ...){
 # vars: variable names
 get_predictors <- function(frm, vars){
   v <- all.vars(frm[[3]])
-  w <-v[!v %in% vars]
+  w <-v[!v %in% c(vars,".")]
   if( length(w) > 0)
     stop(sprintf("Predictors %s not found in data",paste(w,collapse=", ")))
   v
