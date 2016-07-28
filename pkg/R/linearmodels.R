@@ -3,7 +3,8 @@
 #'
 #' Use to fit and impute missing data.
 #'
-#' @param dat A \code{data.frame}, with variables to be imputed
+#' @param dat \code{[data.frame]}, with variables to be imputed and their
+#'   predictors.
 #' @param model \code{[formula]} imputation model description (see Details below).
 #' @param add_residual \code{[character]} Type of residual to add. \code{"normal"} 
 #'   means that the imputed value is drawn from \code{N(mu,sd)} where \code{mu}

@@ -1,16 +1,15 @@
 
 
 #' @rdname impute_
-#' @param donor_set Determine donors set for each variable or once for all imputed variables.
 #' @param prob \code{[numeric]} Sampling probability weights (passed through to \code{\link[base]{sample}}). 
 #'         Must be of length \code{nrow(dat)}.
 #' @export
-impute_rhd <- function(dat, model, donor_set=c("per-variable","common-donor"), prob, ...){
+impute_rhd <- function(dat, model, pool=c("per-variable","common-donor"), prob, ...){
   
   stopifnot(inherits(model,"formula"))
-  donor <- match.arg(donor_set)
+  pool <- match.arg(pool)
   
-  rhd <- if (donor == "per-variable") single_rhd else multi_rhd
+  rhd <- if (pool == "per-variable") single_rhd else multi_rhd
   
   if (missing(prob)) prob <- rep(1,nrow(dat)) else stopifnot(length(prob)!=nrow(dat))
   dat[length(dat) + 1] <- prob
