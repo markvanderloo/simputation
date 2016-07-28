@@ -4,50 +4,93 @@
 #' @param prob \code{[numeric]} Sampling probability weights (passed through to \code{\link[base]{sample}}). 
 #'         Must be of length \code{nrow(dat)}.
 #' @export
-impute_rhd <- function(dat, model, pool=c("per-variable","common-donor"), prob, ...){
+impute_rhd <- function(dat, model, pool=c("univariate","multivariate"), prob, ...){
   
   stopifnot(inherits(model,"formula"))
   pool <- match.arg(pool)
   
-  rhd <- if (pool == "per-variable") single_rhd else multi_rhd
+  rhd <- if (pool == "univariate") single_rhd else multi_rhd
   
-  if (missing(prob)) prob <- rep(1,nrow(dat)) else stopifnot(length(prob)!=nrow(dat))
-  dat[length(dat) + 1] <- prob
-  
+  prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
+
   predicted <- get_predicted(model,names(dat))
   predictors <- get_predictors(model,names(dat))
   
+  idat <- dat[predicted]
+  # ugly construction, but fast.
+  idat$PROB..TMP <- prob
+    
   spl <- if (length(predictors) > 0) dat[predictors] else data.frame(split=rep(1,nrow(dat)))
   
   # split-apply-combine, the base-R way.
-  dat[predicted] <- unsplit( lapply( split(dat, spl), rhd ), spl)[predicted]
+  dat[predicted] <- unsplit( lapply( split(idat, spl), rhd ), spl)[predicted]
 
   # remove column with probability weights
-  dat[-length(dat)]
+  dat
 }
+
+# A 'sample' with reasonable behaviour.
+isample <- function(x, size, replace=FALSE, prob=NULL){
+  if (length(x)==1) rep(x,size) else sample(x,size,replace,prob)
+}
+
 
 # random hot deck, column by column
 single_rhd <- function(x){
-  for ( i in seq_along(x)){
+  for ( i in seq_along(x)[-length(x)]){
     ina <- is.na(x[,i])
     if ( !any(ina) || all(ina) ) next
-    x[ina,i] <- sample(x[!ina,i], size=sum(ina), replace=TRUE,prob=x[!ina,length(x)])
+    x[ina,i] <- isample(x[!ina,i], size=sum(ina), replace=TRUE,prob=x$PROB..TMP[!ina])
   }
   x
 }
 
-# random hot-deck, for each column
 multi_rhd <- function(x){
-  ic <- complete.cases(x)
-  # find donor for everybody (allows for easy indexing in loop)
-  idon <- sample(which(ic), size=nrow(x), replace=TRUE, prob=x[!ina, length(x)])
-  for ( i in seq_along(x)){
-    ina <- is.na(x[,i])
-    if ( !any(ina) || all(ina) ) next
-    x[ina,i] <- x[idon[ina],i]
+  nvar <- length(x)
+  M <- is.na(x)[,-nvar,drop=FALSE]
+  
+  # derive missing data patterns
+  mdp <- unique(M)
+  if ( nrow(mdp) == 0 ) return(x) # nothing to do..
+  
+  # donor pool for each missing data pattern
+  donor_pool <- apply(mdp,1,function(pat) complete.cases(x[pat]))
+  
+  # recipient set for each missing data pattern
+  M <- t(M)
+  p <- nvar - 1 # number of actual variables (last is probability vector)
+  recipient_set <- apply(mdp,1,function(pat){
+    colSums(M==pat) == p
+  })
+  
+  for (i in seq_len(nrow(mdp))) {
+    pat <- mdp[i,]
+    if ( sum(pat) == 0 || sum(donor_pool[,i])==0 ) next # nothing missing, or no donors
+    donors <- x[donor_pool[,i],pat,drop=FALSE]
+    j <- isample(seq_len(nrow(donors)), size=sum(recipient_set[,i]), replace=TRUE, prob = x$PROB..TMP )
+    x[recipient_set[,i],pat] <- donors[j,,drop=FALSE]
   }
   x
 }
+
+
+
+
+
+
+# random hot-deck, for each column
+# multi_rhd <- function(x){
+#   M <- is.na(x)
+#   mdp <- unique(M)  
+#   # find donor for everybody (allows for easy indexing in loop)
+#   idon <- sample(which(ic), size=nrow(x), replace=TRUE, prob=x[!ina, length(x)])
+#   for ( i in seq_along(x)){
+#     ina <- is.na(x[,i])
+#     if ( !any(ina) || all(ina) ) next
+#     x[ina,i] <- x[idon[ina],i]
+#   }
+#   x
+# }
 
 
 #' @rdname impute_
@@ -55,7 +98,7 @@ multi_rhd <- function(x){
 #' @param pool Create a donor pool for each variable (\code{"single"}) or create a donor
 #' pool for each missingess pattern (\code{"multiple"}).
 #' @export
-impute_shd <- function(dat, model, order=c("locf","nocb"), pool=c("single","multiple"),...){
+impute_shd <- function(dat, model, order=c("locf","nocb"), pool=c("univariate","multivariate"),...){
   stopifnot(inherits(model,"formula"))
   predicted <- get_predicted(model,names(dat),no_pp_overlap=FALSE)
   predictors <- get_predictors(model,names(dat))
@@ -71,7 +114,7 @@ impute_shd <- function(dat, model, order=c("locf","nocb"), pool=c("single","mult
  
   # order imputed variables.
   idat <- dat[ord, predicted, drop=FALSE] 
-  if (pool == "single"){
+  if (pool == "univariate"){
     for ( p in predicted ) idat[,p] <- single_shd(idat[,p])
   } else {
     idat <- multi_shd(idat)
@@ -114,7 +157,7 @@ multi_shd <- function(x){
   M <- is.na(x)
   
   # derive missing data patterns
-  mdp <- unique(M)[-1,,drop=FALSE]
+  mdp <- unique(M)
   if ( nrow(mdp) == 0 ) return(x) # nothing to do..
   
   # donor pool for each missing data pattern
@@ -129,6 +172,7 @@ multi_shd <- function(x){
   
   for (i in seq_len(nrow(mdp))) {
     pat <- mdp[i,]
+    if (sum(pat) == 0 || sum(donor_pool[,i]) == 0) next # nothing missing, or no donors
     donors <- x[donor_pool[,i],pat,drop=FALSE]
     j <- donor_indices(x,donor_pool[,i],recipient_set[,i])
     x[recipient_set[,i],pat] <- donors[j,,drop=FALSE]
