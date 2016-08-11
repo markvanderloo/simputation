@@ -238,9 +238,9 @@ impute_pmm <- function(dat, model, predictor=impute_lm, ...){
 
 
 #' @rdname impute_
-#' 
+#' @param k Number of nearest neighbours to draw the donor from.
 #' @export
-impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"), ...){
+impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"), k=5, ...){
   stopifnot(inherits(model,"formula"))
   pool <- match.arg(pool)
   
@@ -254,9 +254,7 @@ impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"
       , multivariate = multi_knn
   )
   
-  # split-apply-combine with hair on y'r chest; Argh.
-  spl <- if (length(predictors) > 0) dat[predictors] else data.frame(split=rep(1,nrow(dat)))
-  unsplit( lapply( split(dat, spl), knn ), spl)
+  knn(dat, imp_vars = predicted, match_vars = predictors, k=k)
 }
 
 ## knn-imputation, complete cases as donor pool
@@ -336,10 +334,6 @@ do_knn <- function(recipients, donor_pool, imp_vars, match_vars, k){
 
   recipients
 }
-
-
-
-
 
 
 
