@@ -1,0 +1,29 @@
+
+# travis config
+
+sudo: required
+dist: trusty
+
+language: r
+cache: packages
+
+before_install:
+  - R -e "install.packages(c('devtools','roxygen2','testthat'))"
+  - R -e "devtools::install_deps('./pkg')"
+  - R -e "devtools::document('./pkg')"
+  - cd ./pkg
+
+r_packages:
+  - covr
+  - rmarkdown
+
+
+after_success:
+  - Rscript -e 'library(covr);coveralls()'
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+
+
