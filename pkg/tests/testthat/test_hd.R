@@ -40,19 +40,19 @@ test_that("random hot deck",{
 test_that("knn-imputation",{
   dat <- data.frame(x = c(NA,2,4,5), y = c(6,7,NA,10))
   options(gd_num_thread = 1L)
-  expect_equal(
-    impute_knn(dat, x + y ~ x + y, pool = "complete", k=1)
-    , data.frame(x=c(2,2,4,5), y=c(6,7,10,10))
-    )
-  expect_equal(
-    impute_knn(dat, x + y ~ x + y, pool = "univariate", k=1)
-    , data.frame(x=c(2,2,4,5),y=c(6,7,10,10)) 
-  )
-  
-  expect_equal(
-    impute_knn(dat, x + y ~ x + y, pool = "multivariate", k=1)
-    , data.frame(x=c(2,2,4,5),y=c(6,7,10,10)) 
-  )
+
+   expect_equal(
+     sum(is.na(impute_knn(dat, x + y ~ x + y, pool = "complete", k=1))),0 )
+   
+   expect_equal(
+     impute_knn(dat, x + y ~ x + y, pool = "univariate", k=1)
+     , data.frame(x=c(2,2,4,5),y=c(6,7,10,10)) 
+   )
+   
+   expect_equal(
+     impute_knn(dat, x + y ~ x + y, pool = "multivariate", k=1)
+     , data.frame(x=c(2,2,4,5),y=c(6,7,10,10)) 
+   )
   
   
 })

@@ -254,7 +254,7 @@ impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"
       , univariate = single_knn
       , multivariate = multi_knn
   )
-  
+ 
   knn(dat, imp_vars = predicted, match_vars = predictors, k=k)
 }
 
@@ -318,15 +318,16 @@ multi_knn <-  function(dat, imp_vars, match_vars, k){
 # generic knn imputation. 
 do_knn <- function(recipients, donor_pool, imp_vars, match_vars, k){
   # check if we have enough donors to draw from. Otherwise lower k.
-  if ( k > nrow(donor_pool)){
+  ndon <- nrow(donor_pool)
+  if ( k > ndon ){
     warning(sprintf("Requested k = %d while %d donors present. Using k = %d."
-                    ,k,nrow(donor_pool),nrow(donor_pool)),call.=FALSE)
+                    , k, ndon, ndon),call.=FALSE)
     k <- nrow(donor_pool)
   }
   
   # compute top-k matches.
   L <- gower::gower_topn(recipients[match_vars], donor_pool[match_vars], n=k)
-  
+
   # draw indices in the table of closest matches.
   j <- isample(seq_len(k), size=nrow(recipients), replace=TRUE)
   
