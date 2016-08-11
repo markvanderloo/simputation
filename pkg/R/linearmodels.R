@@ -20,18 +20,25 @@
 #' \item{The \code{predictor} for \code{impute_pmm}}
 #' }
 #' 
+#' @section Specifying the imputation model:
+#' 
+#' The left-hand-side of the formula object lists the variable or variables to 
+#' be imputed. The interpretation of the independent variables on the right-hand-side 
+#' depends on the underlying imputation model. 
+#' 
+#' 
 #' @section Details:
 #' 
-#' Model specification works as usual, except that it is possible to impute multiple
-#' variables based on the same model. To specify the same model for multiple variables,
-#' simply add variables to the left-hand side of the formula using \code{+}. Also see the
-#' examples.
+#' The functions are designed to be robust against failing imputations. This means that
+#' rather than emitting an error, functions show the following behaviour.
 #' 
-#' If a value cannot be imputed because one of its predictors is missing, the value will
-#' remain missing after imputation.
+#' \itemize{
+#' \item{If a value cannot be imputed because one of its predictors is missing, the value will
+#' remain missing after imputation.}
 #' 
-#' If a model cannot be fitted, e.g. because the imputed model is missing, a warning
-#' is emitted and fot htat variable no imputation will take place.
+#' \item{If a model cannot be fitted, e.g. because the imputed model is missing, a warning
+#' is emitted and for that variable no imputation will take place.}
+#' }
 #' 
 #' 
 #' @section Model descriptions:

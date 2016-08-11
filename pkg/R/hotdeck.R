@@ -1,15 +1,43 @@
 
-
+#' @section Hot deck imputation:
+#' 
+#' 
+#' \itemize{
+#' \item{\code{impute_rhd} The predictor variables in the \code{model} argument are used to split the data 
+#' set into groups prior to imputation (use \code{~ 1} to specify that no grouping is applied).}
+#' \item{\code{impute_shd} The predictor variables are used to sort the data.}
+#' \item{\code{impute_knn} The predictors are used to determine Gower's distance between records.}
+#'} 
+#' 
+#' The \code{pool} argument is used to specify the donor pool as follows.
+#' \itemize{
+#' \item{\code{"complete"}. Only complete records are used as donors. If a record has multiple missings,
+#'    all imputations are taken from a single donor.}
+#' \item{\code{"univariate"}. Imputed variables are treated one by one. 
+#'    Complete cases for a variable are used as donor pool; if a record has multiple missings,
+#'    separate donors are drawn for each missing value.}
+#' \item{\code{"multivariate"}. A donor pool is created for each missing data pattern.
+#'   If a record has multiple missings, all imputations are taken from a single donor.}
+#' } 
+#' 
+#' 
+#'
+#'
 #' @rdname impute_
+#' @param pool Specify donor pool. See under 'Hot deck imputation'.
 #' @param prob \code{[numeric]} Sampling probability weights (passed through to \code{\link[base]{sample}}). 
 #'         Must be of length \code{nrow(dat)}.
 #' @export
-impute_rhd <- function(dat, model, pool=c("univariate","multivariate"), prob, ...){
+impute_rhd <- function(dat, model, pool=c("complete","univariate","multivariate"), prob, ...){
   
   stopifnot(inherits(model,"formula"))
   pool <- match.arg(pool)
   
-  rhd <- if (pool == "univariate") single_rhd else multi_rhd
+  rhd <- switch(pool
+      , complete     = cc_rhd
+      , univariate   = single_rhd
+      , multivariate = multi_rhd)
+  
   
   prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
 
@@ -30,6 +58,19 @@ impute_rhd <- function(dat, model, pool=c("univariate","multivariate"), prob, ..
 }
 
 
+# random hot deck, comlete cases pool
+cc_rhd <- function(x){
+  ic <- complete.cases(x)
+  if ( !any(ic) || all(ic) ) return(x) # no donors or no missings
+  prb <- x$PROB..TMP[ic]
+  nna <- sum(!ic)
+  jdn <- isample(which(ic),size=nna, replace=TRUE, prob=prb) 
+  
+  ina <- is.na(x)
+  x[ina] <- x[jdn,,drop=FALSE][ina]
+  x
+}
+
 # random hot deck, column by column
 single_rhd <- function(x){
   for ( i in seq_along(x)[-length(x)]){
@@ -45,11 +86,12 @@ multi_rhd <- function(x){
   nvar <- length(x)
   M <- is.na(x)[,-nvar,drop=FALSE]
   
-  # derive missing data patterns
+  if (sum(M)==0) return(x) # nothing to do
+   
+  # derive missing data patterns (one pattern per row)
   mdp <- unique(M)
-  if ( nrow(mdp) == 0 ) return(x) # nothing to do..
-  
-  # donor pool for each missing data pattern
+
+  # donor pool for each missing data pattern (columns represent donors)
   donor_pool <- iapply(mdp,1,function(pat) complete.cases(x[pat]))
   
   # recipient set for each missing data pattern
@@ -72,10 +114,9 @@ multi_rhd <- function(x){
 
 #' @rdname impute_
 #' @param order Last Observation Carried Forward or Next Observarion Carried Backward
-#' @param pool Create a donor pool for each variable (\code{"single"}) or create a donor
-#' pool for each missingess pattern (\code{"multiple"}).
 #' @export
-impute_shd <- function(dat, model, order=c("locf","nocb"), pool=c("univariate","multivariate"),...){
+impute_shd <- function(dat, model, pool=c("complete","univariate","multivariate")
+                       , order=c("locf","nocb"),...){
   stopifnot(inherits(model,"formula"))
   predicted <- get_predicted(model,names(dat),no_pp_overlap=FALSE)
   predictors <- get_predictors(model,names(dat))
@@ -90,10 +131,13 @@ impute_shd <- function(dat, model, order=c("locf","nocb"), pool=c("univariate","
   ind <- order(ord)
  
   # order imputed variables.
-  idat <- dat[ord, predicted, drop=FALSE] 
-  if (pool == "univariate"){
+  idat <- dat[ord, predicted, drop=FALSE]
+  
+  if (pool == "complete"){
+    idat <- cc_shd(idat)
+  } else if (pool == "univariate"){
     for ( p in predicted ) idat[,p] <- single_shd(idat[,p])
-  } else {
+  } else if( pool == "multivariate") {
     idat <- multi_shd(idat)
   }
   # reorder
@@ -102,7 +146,7 @@ impute_shd <- function(dat, model, order=c("locf","nocb"), pool=c("univariate","
 }
 
 
-# determine indices of donors voor recipients
+# determine indices of donors for recipients
 donor_indices <- function(x, is_present, is_missing){
   npresent <- sum(is_present)
   subindices <- ( npresent - rev(cumsum(rev(is_present))) ) %% npresent + 1
@@ -130,6 +174,22 @@ single_shd <- function(x){
 }
 
 
+# sequential NOCB hotdeck, with complete cases as donor
+cc_shd <- function(x){
+  donor_pool <- complete.cases(x)
+  if ( all(donor_pool)||!any(donor_pool) ) return(x) # nothing to do
+  
+  recipient_set <- !donor_pool
+  #donor_pool <- which(donor_pool)
+ 
+  j <- donor_indices(x,donor_pool, recipient_set)
+  donors <- x[which(donor_pool)[j],,drop=FALSE]
+  ina <- is.na(x[recipient_set,,drop=FALSE])
+  x[recipient_set,][ina] <- donors[ina]
+  x
+}
+
+# sequential NOCB hotdeck, per missing data pattern
 multi_shd <- function(x){
   M <- is.na(x)
   
@@ -137,10 +197,10 @@ multi_shd <- function(x){
   mdp <- unique(M)
   if ( nrow(mdp) == 0 ) return(x) # nothing to do..
   
-  # donor pool for each missing data pattern
+  # donor pool for each missing data pattern (each column is one donor pool)
   donor_pool <- iapply(mdp,1,function(pat) complete.cases(x[pat]))
   
-  # recipient set for eachmissing data pattern
+  # recipient set for each missing data pattern
   M <- t(M)
   nvar <- length(x)
   recipient_set <- iapply(mdp,1,function(pat){
@@ -163,7 +223,7 @@ multi_shd <- function(x){
 #'    of the \code{impute_} functions of this package.
 #' @export
 impute_pmm <- function(dat, model, predictor=impute_lm, ...){
-  
+  # todo: specify donor pool 'complete', 'uni-,multivariate'
   idat <- predictor(dat=dat,model=model,...)
   predicted <- get_predicted(model,names(dat))
   for ( p in predicted ){
@@ -177,10 +237,105 @@ impute_pmm <- function(dat, model, predictor=impute_lm, ...){
 }
 
 
+#' @rdname impute_
+#' 
+#' @export
+impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"), ...){
+  stopifnot(inherits(model,"formula"))
+  pool <- match.arg(pool)
+  
+  predicted <- get_predicted(model,names(dat),no_pp_overlap = FALSE)
+  predictors <- get_predictors(model,names(dat))
+  
+  # choose imputation function.
+  knn <- switch(pool
+      , complete = cc_knn
+      , univariate = single_knn
+      , multivariate = multi_knn
+  )
+  
+  # split-apply-combine with hair on y'r chest; Argh.
+  spl <- if (length(predictors) > 0) dat[predictors] else data.frame(split=rep(1,nrow(dat)))
+  unsplit( lapply( split(dat, spl), knn ), spl)
+}
+
+## knn-imputation, complete cases as donor pool
+cc_knn <- function(dat, imp_vars, match_vars, k){
+  ic <- complete.cases(dat[imp_vars])
+  if (all(ic)||!any(ic)) return(dat) # nothing to do..
+  dat[!ic,] <- do_knn(dat[!ic,,drop=FALSE], dat[ic,,drop=FALSE],imp_vars, match_vars, k)
+  dat
+}
+
+## per-column knn-imputation
+single_knn <- function(dat, imp_vars, match_vars, k){
+   for ( p in imp_vars ){
+     ina <- is.na(dat[,p])
+     dat[ina,] <- do_knn(recipients = dat[ina,,drop=FALSE], donor_pool = dat[!ina,,drop=FALSE]
+        , imp_vars=p, match_vars = match_vars, k=k)
+   }
+  dat
+}
+
+## Per-missing data pattern knn-imputation
+multi_knn <-  function(dat, imp_vars, match_vars, k){
+  dimp <- dat[imp_vars]
+  M <- is.na(dimp)
+  if (sum(M)==0) return(dat) # nothing to impute
+  
+  # unique missing data patterns (one per row)
+  mdp <- unique(M)
+  # all missing data patterns, (one per column)
+  M <- t(M)
+  
+  # loop over missing data patterns
+  for ( i in seq_len(nrow(mdp)) ){
+    pat <- mdp[i,]
+    if ( !any(pat) ) next # nothing to do.
+    
+    # find records with missing pattern 'pat' (recycling over columns of M)
+    recip <- which(colSums(M==pat)==length(pat))
+    
+    # find records where variables according to 'pat' are complete.
+    ic <- complete.cases(dimp[pat])
+    
+    # skip if no donors available
+    if (!any(ic) ) next 
+    
+    # impute
+    dat[recip,] <- do_knn(recipients = dat[recip,,drop=FALSE]
+        , donor_pool = dat[ic,,drop=FALSE]
+        , imp_vars = imp_vars, match_vars=match_vars, k=k)
+  }
+  dat
+}
 
 
+# generic knn imputation. 
+do_knn <- function(recipients, donor_pool, imp_vars, match_vars, k){
+  # check if we have enough donors to draw from. Otherwise lower k.
+  if ( k > nrow(donor_pool)){
+    warning(sprintf("Requested k = %d while %d donors present. Using k = %d."
+                    ,k,nrow(donor_pool),nrow(donor_pool)),call.=FALSE)
+    k <- nrow(donor_pool)
+  }
+  
+  # compute top-k matches.
+  L <- gower::gower_topn(recipients[match_vars], donor_pool[match_vars], n=k)
+  
+  # draw indices in the table of closest matches.
+  j <- sample(1:k,size=nrow(recipients),replace=TRUE)
+  
+  # get donors from index-table of closest matches
+  A <- matrix(c(j,seq_along(j)),nrow=length(j)) 
+  donors <- donor_pool[L$index[A],imp_vars,drop=FALSE]
 
+  # impute and return completed dataset.
+  ina <- is.na(recipients[imp_vars])
+  recipients[imp_vars][ina] <- donors[ina]
 
+  recipients
+}
 
 
 
