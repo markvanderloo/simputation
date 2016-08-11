@@ -6,15 +6,16 @@
 #' \item{\code{impute_rhd} The predictor variables in the \code{model} argument are used to split the data 
 #' set into groups prior to imputation (use \code{~ 1} to specify that no grouping is applied).}
 #' \item{\code{impute_shd} The predictor variables are used to sort the data.}
-#' \item{\code{impute_knn} The predictors are used to determine Gower's distance between records.}
+#' \item{\code{impute_knn} The predictors are used to determine Gower's distance 
+#'  between records (see \code{\link[gower]{gower_topn}}).
 #'} 
 #' 
 #' The \code{pool} argument is used to specify the donor pool as follows.
 #' \itemize{
 #' \item{\code{"complete"}. Only complete records are used as donors. If a record has multiple missings,
 #'    all imputations are taken from a single donor.}
-#' \item{\code{"univariate"}. Imputed variables are treated one by one. 
-#'    Complete cases for a variable are used as donor pool; if a record has multiple missings,
+#' \item{\code{"univariate"}. Imputed variables are treated one by one and independently so
+#'   the order of variable imputation is unimportant. If a record has multiple missings,
 #'    separate donors are drawn for each missing value.}
 #' \item{\code{"multivariate"}. A donor pool is created for each missing data pattern.
 #'   If a record has multiple missings, all imputations are taken from a single donor.}
@@ -261,15 +262,20 @@ impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"
 cc_knn <- function(dat, imp_vars, match_vars, k){
   ic <- complete.cases(dat[imp_vars])
   if (all(ic)||!any(ic)) return(dat) # nothing to do..
-  dat[!ic,] <- do_knn(dat[!ic,,drop=FALSE], dat[ic,,drop=FALSE],imp_vars, match_vars, k)
+  dat[!ic,] <- do_knn(
+    recipients = dat[!ic,,drop=FALSE]
+    , donor_pool = dat[ic,,drop=FALSE]
+    , imp_vars=imp_vars, match_vars = match_vars, k=k)
   dat
 }
 
 ## per-column knn-imputation
 single_knn <- function(dat, imp_vars, match_vars, k){
+  # temporary var so by-variable imputations are independent.
+  idat <- dat 
    for ( p in imp_vars ){
      ina <- is.na(dat[,p])
-     dat[ina,] <- do_knn(recipients = dat[ina,,drop=FALSE], donor_pool = dat[!ina,,drop=FALSE]
+     dat[ina,] <- do_knn(recipients = idat[ina,,drop=FALSE], donor_pool = idat[!ina,,drop=FALSE]
         , imp_vars=p, match_vars = match_vars, k=k)
    }
   dat
@@ -322,7 +328,7 @@ do_knn <- function(recipients, donor_pool, imp_vars, match_vars, k){
   L <- gower::gower_topn(recipients[match_vars], donor_pool[match_vars], n=k)
   
   # draw indices in the table of closest matches.
-  j <- sample(1:k,size=nrow(recipients),replace=TRUE)
+  j <- isample(seq_len(k), size=nrow(recipients), replace=TRUE)
   
   # get donors from index-table of closest matches
   A <- matrix(c(j,seq_along(j)),nrow=length(j)) 
