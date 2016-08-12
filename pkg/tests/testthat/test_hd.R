@@ -29,9 +29,10 @@ test_that("random hot deck",{
     x = c(2,NA,4)
     , y = c(NA,NA,8)
   )
-  expect_equal(impute_rhd(dat, y ~ 1),data.frame(x=c(2,NA,4),y=rep(8,3))) 
+  expect_equal(impute_rhd(dat, y ~ 1),data.frame(x=c(2,NA,4),y=rep(8,3)),pool="complete") 
   expect_true(!is.na(sum(impute_rhd(dat, x + y ~ 1))) )
   expect_true(!is.na(sum(impute_rhd(dat, x + y ~ 1,pool="multivariate"))) )
+  expect_true(!is.na(sum(impute_rhd(dat, x + y ~ 1,pool="univariate"))) )
   dat$foo <- letters[1:3]
   expect_equal(impute_rhd(dat,x+y~foo),dat)
   expect_equal(impute_rhd(dat, x+y~foo,pool="multivariate"),dat)
