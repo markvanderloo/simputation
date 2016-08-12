@@ -75,10 +75,24 @@ test_that("knn-imputation",{
 test_that("pmm-imputation",{
   dat <- data.frame(x=c(1,2,2,4),y=c(0.9,2.1,NA,4.2))
   expect_equal(
-    impute_pmm(dat, y ~x)
+    impute_pmm(dat, y ~ x, pool="univariate")
     , data.frame(x=c(1,2,2,4),y=c(0.9, 2.1,2.1,4.2))
   )
-  
+  dat <- data.frame(x=c(1.0, 2.0, 3.0, 3.0, 5.0)
+                  , y=c(0.9, 2.1, NA,  NA,  4.9)
+                  , z=c(2.2, 3.8, 4.2, NA, 10.1))
+  expect_equal(
+      impute_pmm(dat, y + z ~ x, pool="multivariate")
+    , data.frame(x=dat$x
+                 , y=c(0.9, 2.1, 2.1, 2.1, 4.9)
+                 , z=c(2.2, 3.8, 4.2, 3.8, 10.1)) 
+  )
+  expect_equal(
+      impute_pmm(dat, y + z ~ x, pool="complete")
+    , data.frame(x=dat$x
+                 , y=c(0.9, 2.1, 2.1, 2.1, 4.9)
+                 , z=c(2.2, 3.8, 4.2, 3.8, 10.1)) 
+  )
   
 })
 

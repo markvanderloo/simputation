@@ -243,11 +243,21 @@ impute_pmm <- function(dat, model, predictor=impute_lm
   # generate predictions by imputing with the 'predictor' function.
   idat <- predictor(dat=dat,model=model,...)
   predicted <- get_predicted(model,names(dat))
-  single_pmm(dat, idat, predicted)  
+  predicted <- names(dat) %in% predicted
+  # call appropriate workhorse imputation function
+  switch(pool
+    , complete = multi_cc_pmm(dat,idat,predicted, TRUE)
+    , univariate = single_pmm(dat,idat,predicted)
+    , multivariate = multi_cc_pmm(dat,idat,predicted,FALSE)
+  )
+  
 }
 
+# dat: original data
+# idat: model-imputed data
+# predicted [logical] which variables have been imputed
 single_pmm <- function(dat, idat, predicted){
-  for ( p in predicted ){
+  for ( p in which(predicted) ){
     don <- dat[!is.na(dat[,p]),p]
     iimp <- is.na(dat[,p]) & !is.na(idat[,p])
     if ( length(don)==0 || sum(iimp)==0) next # no donors, or nothing to impute
@@ -255,6 +265,42 @@ single_pmm <- function(dat, idat, predicted){
   } 
   idat
 }
+
+# dat: original data
+# idat: model-imputed data
+# predicted [logical] which variables have been imputed
+# only_complete:[logical] TRUE: complete cases only, FALSE: by missingness pattern
+# (only_complete=FALSE)
+multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
+  M <- is.na(dat) & !is.na(idat)
+  # get missing data patterns 
+  mdp <- unique(M)
+  M <- t(M)
+  imputed <- logical(nrow(dat))
+  if (only_complete) donor_pool <- complete.cases(dat[predicted])
+  for ( i in seq_len(nrow(mdp))){
+    # get missing data pattern for imputed variables
+    pat <- mdp[i,]
+    # skip if that leaves us with nothing
+    if (!any(pat)) next
+    # only donors that have not been imputed earlier
+    if(!only_complete) donor_pool <- complete.cases(dat[pat]) & !imputed
+    # no donors or nothing to impute: skip.
+    if (!any(donor_pool)||all(donor_pool)) next 
+    # recycle over columns of M to find recipients with pattern 'pat'
+    recipients <- colSums(M==pat) == length(pat)
+    # get closest match (scaled L1 distance)
+    topn <- gower::gower_topn(idat[recipients,pat,drop=FALSE]
+                  , dat[donor_pool,pat,drop=FALSE], n=1L)
+    # index from donor pool to actual dataset
+    j <- which(donor_pool)[topn$index]
+    # impute the bastard; update imputation administration
+    dat[recipients,pat] <- dat[j,pat]
+    imputed <- imputed | recipients
+  }
+  dat
+}
+
 
 
 
