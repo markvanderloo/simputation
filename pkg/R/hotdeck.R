@@ -11,18 +11,22 @@
 #' set into groups prior to imputation (use \code{~ 1} to specify that no grouping is applied).}
 #' \item{\code{impute_shd} The predictor variables are used to sort the data.}
 #' \item{\code{impute_knn} The predictors are used to determine Gower's distance 
-#'  between records (see \code{\link[gower]{gower_topn}}).
+#'  between records (see \code{\link[gower]{gower_topn}})}.
 #'} 
 #' 
 #' The \code{pool} argument is used to specify the donor pool as follows.
 #' \itemize{
-#' \item{\code{"complete"}. Only complete records are used as donors. If a record has multiple missings,
-#'    all imputations are taken from a single donor.}
-#' \item{\code{"univariate"}. Imputed variables are treated one by one and independently so
-#'   the order of variable imputation is unimportant. If a record has multiple missings,
-#'    separate donors are drawn for each missing value.}
-#' \item{\code{"multivariate"}. A donor pool is created for each missing data pattern.
-#'   If a record has multiple missings, all imputations are taken from a single donor.}
+#' \item{\code{"complete"}. Only records for which the variables on the
+#'    left-hand-side of the model formula are complete are used as donors. If a
+#'    record has multiple missings, all imputations are taken from a single 
+#'    donor.}
+#' \item{\code{"univariate"}. Imputed variables are treated one by one and
+#'    independently so the order of variable imputation is unimportant. If a 
+#'    record has multiple missings, separate donors are drawn for each missing 
+#'    value.}
+#' \item{\code{"multivariate"}. A donor pool is created for each missing data 
+#'    pattern. If a record has multiple missings, all imputations are taken from 
+#'    a single donor.}
 #' } 
 #' 
 #' 
@@ -30,8 +34,8 @@
 #'
 #' @rdname impute_
 #' @param pool Specify donor pool. See under 'Hot deck imputation'.
-#' @param prob \code{[numeric]} Sampling probability weights (passed through to \code{\link[base]{sample}}). 
-#'         Must be of length \code{nrow(dat)}.
+#' @param prob \code{[numeric]} Sampling probability weights (passed through to
+#'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
 #' @export
 impute_rhd <- function(dat, model, pool=c("complete","univariate","multivariate"), prob, ...){
   

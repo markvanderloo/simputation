@@ -62,7 +62,7 @@
 #' \code{\link[stats]{lm}} \code{\link[MASS]{rlm}} \code{\link[rpart]{rpart}}
 #' 
 #'
-#' @return \code{data}, imputed according to \code{model}.
+#' @return \code{dat}, but imputed where possible.
 #' 
 #' 
 #' @examples
