@@ -6,11 +6,23 @@ test_that("sequential hot deck",{
     x = c(1,2,NA,4)
     , y = c(2,NA,NA,8)
   )
+
   
+    
   expect_equal(impute_shd(dat, x + y ~ 1,pool="univariate")
                , data.frame(x=c(1,2,2,4),y=c(2,2,2,8))
+               ,info="unsorted univariate single hot deck")
+
+  expect_equal(impute_shd(dat, x + y ~ 1,pool="univariate", order="nocb")
+               , data.frame(x=c(1,2,4,4),y=c(2,8,8,8))
+               ,info="unsorted univariate single NOCB hot deck")
+  
+  
+  expect_equal(impute_shd(dat, x + y ~ 1,pool="multivariate")
+               , data.frame(x=c(1,2,1,4),y=c(2,2,2,8))
                ,info="unsorted single hot deck")
   
+    
   expect_equal(impute_shd(dat, x + y ~ 1,order="nocb")
                , data.frame(x=c(1,2,4,4),y=c(2,8,8,8))
                ,info="unsorted single hot deck")
@@ -57,6 +69,21 @@ test_that("knn-imputation",{
      , data.frame(x=c(2,2,4,5),y=c(6,7,10,10)) 
    )
   
+})
+
+
+test_that("pmm-imputation",{
+  dat <- data.frame(x=c(1,2,2,4),y=c(0.9,2.1,NA,4.2))
+  expect_equal(
+    impute_pmm(dat, y ~x)
+    , data.frame(x=c(1,2,2,4),y=c(0.9, 2.1,2.1,4.2))
+  )
+  
   
 })
+
+
+
+
+
 

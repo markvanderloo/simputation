@@ -1,4 +1,8 @@
 
+# ------------------------------------------------------------------------------
+# RANDOM HOTDECK IMPUTATION
+
+
 #' @section Hot deck imputation:
 #' 
 #' 
@@ -112,6 +116,9 @@ multi_rhd <- function(x){
   x
 }
 
+# ------------------------------------------------------------------------------
+# SEQUENTIAL HOTDECK IMPUTATION
+
 
 #' @rdname impute_
 #' @param order Last Observation Carried Forward or Next Observarion Carried Backward
@@ -218,15 +225,28 @@ multi_shd <- function(x){
   x
 }
 
+# ------------------------------------------------------------------------------
+# PMM IMPUTATION
+
 
 #' @rdname impute_
-#' @param predictor \code{[function]} Imputation to use for predictive part in predictive mean matching. Any 
-#'    of the \code{impute_} functions of this package.
+#' @param predictor \code{[function]} Imputation to use for predictive part in
+#'   predictive mean matching. Any of the \code{impute_} functions of this
+#'   package (it makes no sense to use a hot-deck imputation).
 #' @export
-impute_pmm <- function(dat, model, predictor=impute_lm, ...){
-  # todo: specify donor pool 'complete', 'uni-,multivariate'
+impute_pmm <- function(dat, model, predictor=impute_lm
+  , pool=c('complete','univariate','multivariate'), ...){
+
+  # input check
+  pool <- match.arg(pool)
+  
+  # generate predictions by imputing with the 'predictor' function.
   idat <- predictor(dat=dat,model=model,...)
   predicted <- get_predicted(model,names(dat))
+  single_pmm(dat, idat, predicted)  
+}
+
+single_pmm <- function(dat, idat, predicted){
   for ( p in predicted ){
     don <- dat[!is.na(dat[,p]),p]
     iimp <- is.na(dat[,p]) & !is.na(idat[,p])
@@ -234,8 +254,13 @@ impute_pmm <- function(dat, model, predictor=impute_lm, ...){
     idat[iimp,p] <- .Call("pmm_impute_dbl",as.double(idat[iimp,p]),as.double(don))
   } 
   idat
-  
 }
+
+
+
+# ------------------------------------------------------------------------------
+# KNN IMPUTATION
+
 
 
 #' @rdname impute_
