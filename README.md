@@ -6,20 +6,19 @@
 # simputation
 An R package to make imputation simple. Currently supported methods include
 
-- Statistical model based:
+- Model based (optional [non-]parametric random residual)
     - linear regression 
     - robust linear regression
     - CART models
 - Donor imputation (including various donor pool specifications)
-  - k-nearest neigbour
+  - k-nearest neigbour (based on [gower](https://cran.r-project.org/package=gower)'s distance)
   - sequential hotdeck (LOCF, NOCB)
   - random hotdeck
   - Predictive mean matching
 - Other
-  - (groupwise) median imputation
+  - (groupwise) median imputation (optional random residual)
   - Proxy imputation (copy from other variable) 
 
-Where applicable, random residuals, parametric or otherwise drawn can be added to the imputed result.
 
 # Example usage
 
