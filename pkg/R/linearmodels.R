@@ -55,8 +55,8 @@
 #' \code{impute_rhd} \tab Random hot deck. Predictors are used to group the donors.\cr
 #' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data.\cr
 #'  \code{impute_pmm} \tab Predictive mean matching. \cr
-#' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model.
-#' \code{impute_rf} \tab Use \code{randomForest::randomForest} to train the predictive model\cr 
+#' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model.\cr
+#' \code{impute_rf} \tab Use \code{randomForest::randomForest} to train the predictive model.
 #' }
 #'
 #' @seealso 

@@ -51,7 +51,7 @@ worknl <- function(dat, model, add_residual, cp,...){
 
 #' @rdname impute_
 #' @export
-impute_rf <- function(dat, model, ...){
+impute_rf <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(model,"formula"))
   
   predictors <- get_predictors(model, names(dat))
@@ -66,6 +66,10 @@ impute_rf <- function(dat, model, ...){
                , data=dat[cc,,drop=FALSE], ...)
     ina <- is.na(dat[,p])
     dat[ina,p] <- predict(m, newdata=dat[ina,,drop=FALSE])
+    if (is.numeric(dat[,p]) && add_residual != "none"){
+      res <- get_res(nmiss=sum(ina), residuals = dat[cc,p]-predict(m), type=add_residual)
+      dat[ina,p] <- dat[ina,p] + res
+    }
   }
   dat
 }
