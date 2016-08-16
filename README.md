@@ -10,7 +10,7 @@ An R package to make imputation simple. Currently supported methods include
     - linear regression 
     - robust linear regression
     - CART models
-    - Random forest (no random residuals)
+    - Random forest
 - Donor imputation (including various donor pool specifications)
   - k-nearest neigbour (based on [gower](https://cran.r-project.org/package=gower)'s distance)
   - sequential hotdeck (LOCF, NOCB)
