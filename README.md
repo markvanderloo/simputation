@@ -4,4 +4,47 @@
 [![CRAN](http://www.r-pkg.org/badges/version/simputation)](http://cran.r-project.org/web/package=simputation)
 [![Downloads](http://cranlogs.r-pkg.org/badges/simputation)](http://cran.r-project.org/package=simputation) 
 # simputation
-Simple Imputation Methods
+An R package to make imputation simple. Currently supported methods include
+
+- Model based (optional [non-]parametric random residual)
+    - linear regression 
+    - robust linear regression
+    - CART models
+- Donor imputation (including various donor pool specifications)
+  - k-nearest neigbour (based on [gower](https://cran.r-project.org/package=gower)'s distance)
+  - sequential hotdeck (LOCF, NOCB)
+  - random hotdeck
+  - Predictive mean matching
+- Other
+  - (groupwise) median imputation (optional random residual)
+  - Proxy imputation (copy from other variable) 
+
+
+# Example usage
+
+Create some data suffering from missings
+```r
+library(simputation) # current package
+library(magrittr)    # for the %>% not-a-pipe operator
+dat <- iris
+# empty a few fields
+dat[1:3,1] <- dat[3:7,2] <- dat[8:10,5] <- NA
+head(dat,10)
+```
+Now impute `Sepal.Length` and `Sepal.Width` by regression on `Petal.Length` and `Species`, and impute `Species` using a CART model, that uses all other variables (including the imputed variables in this case).
+```r
+dat %>% 
+  impute_lm(Sepal.Length + Sepal.Width ~ Petal.Length + Species) %>%
+  impute_cart(Species ~ .) %>% # use all variables except 'Species' as predictor
+  head(10)
+```
+
+# Installation
+
+This package is not on CRAN yet,but thanks to the awesome [drat](http://cran.r-project.org/package=drat) package, installation is easy. If you use the OS whose name shall not be spoken, first install [Rtools](https://cran.r-project.org/bin/windows/Rtools/)
+```r
+if(!require(drat)) install.packages("drat")
+drat::addRepo("markvanderloo")
+install.packages("simputation",type="source")
+```
+
