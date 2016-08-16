@@ -108,7 +108,7 @@ lmwork <- function(dat, model, add_residual, fun, ...){
     m <- tryCatch(fun(as.formula(formulas[i]), dat=dat, ...)
           , error=function(e){
             warning(sprintf("Could not fit model for '%s' because %s\n",p,e$message),call.=FALSE)
-            structure(NA,class="dummymodel")
+            dummymodel()
           })
     res <- get_res(nmiss = sum(ina), residuals = residuals(m), type = add_residual)
     dat[ina, p] <- stats::predict(m, newdat = dat[ina,,drop=FALSE]) + res
@@ -117,8 +117,6 @@ lmwork <- function(dat, model, add_residual, fun, ...){
   
 }
 
-predict.dummymodel <- function(object,...) NA
-residuals.dummymodel <- function(object,...) NA
 
 #' @rdname impute_
 #' @export

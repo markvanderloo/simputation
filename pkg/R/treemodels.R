@@ -49,6 +49,31 @@ worknl <- function(dat, model, add_residual, cp,...){
 }
 
 
+#' @rdname impute_
+#' @export
+impute_rf <- function(dat, model, ...){
+  stopifnot(inherits(model,"formula"))
+  
+  predictors <- get_predictors(model, names(dat))
+  predicted <- get_predicted(model, names(dat))
+  formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
+  
+  for ( i in seq_along(predicted) ){
+    p <- predicted[i]
+    cc <- complete.cases(dat[c(p,predictors)])
+    m <- run_model(randomForest::randomForest
+               , formula=as.formula(formulas[i])
+               , data=dat[cc,,drop=FALSE], ...)
+    ina <- is.na(dat[,p])
+    dat[ina,p] <- predict(m, newdata=dat[ina,,drop=FALSE])
+  }
+  dat
+}
+
+
+
+
+
 
 
 

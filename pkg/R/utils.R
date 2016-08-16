@@ -1,4 +1,24 @@
 
+# Dummy model returned in case of estimation failure, to keep us going.
+dummymodel <- function() structure(NULL,class="dummymodel")
+predict.dummymodel <- function(object,...) NA
+residuals.dummymodel <- function(object,...) NA
+
+run_model <- function(fun, ...){
+    tryCatch(fun(...), error = function(e){
+    # Get predicted variable. list(...)[[1]] must be a formula object
+    p <- all.vars(list(...)[[1]])[[1]]
+    # get model name.
+    #b <- as.character(sys.call(-4L))
+    a <- deparse(sys.call(-4L)[[2]])
+    warning(sprintf("Could not execute %s for '%s': %s",a,p, e$message)
+            , call.=FALSE)
+    dummymodel()
+  })
+}
+
+
+
 # Give 'sample' reasonable behaviour
 isample <- function(x, size, replace=FALSE, prob=NULL){
   if (length(x)==1) rep(x,size) else sample(x,size,replace,prob)
