@@ -34,7 +34,7 @@ worknl <- function(dat, model, add_residual, cp,...){
   for (i in seq_along(predicted)){
     p <- predicted[i]
     ina <- is.na(dat[,p])
-    m <- rpart::rpart(formula = as.formula(formulas[i]),dat=dat, ...)
+    m <- run_model(rpart, formula = as.formula(formulas[i]), data=dat, ...)
     m <- rpart::prune(m,cp[p])
     if (is.numeric(dat[,p])){
       res <- get_res(nmiss = sum(ina),residuals = residuals(m), type=add_residual)

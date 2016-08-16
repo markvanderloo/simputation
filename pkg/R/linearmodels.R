@@ -18,6 +18,7 @@
 #' \item{\code{\link[MASS]{rlm}} for \code{impute_rlm}}
 #' \item{\code{\link[base]{order}} for \code{impute_shd}} 
 #' \item{The \code{predictor} for \code{impute_pmm}}
+#' \item{\code{\link[randomForest]{randomForest}} for \code{impute_rf}}
 #' }
 #' 
 #' @section Specifying the imputation model:
@@ -54,7 +55,8 @@
 #' \code{impute_rhd} \tab Random hot deck. Predictors are used to group the donors.\cr
 #' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data.\cr
 #'  \code{impute_pmm} \tab Predictive mean matching. \cr
-#' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model. 
+#' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model.
+#' \code{impute_rf} \tab Use \code{randomForest::randomForest} to train the predictive model\cr 
 #' }
 #'
 #' @seealso 
@@ -105,11 +107,7 @@ lmwork <- function(dat, model, add_residual, fun, ...){
     ina <- is.na(dat[,p])
     nmiss <- sum(ina)
     if (!any(ina) ) next # skip if no missings
-    m <- tryCatch(fun(as.formula(formulas[i]), dat=dat, ...)
-          , error=function(e){
-            warning(sprintf("Could not fit model for '%s' because %s\n",p,e$message),call.=FALSE)
-            dummymodel()
-          })
+    m <- run_model(fun, formula=as.formula(formulas[i]), data=dat,...)
     res <- get_res(nmiss = sum(ina), residuals = residuals(m), type = add_residual)
     dat[ina, p] <- stats::predict(m, newdat = dat[ina,,drop=FALSE]) + res
   }
