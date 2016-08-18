@@ -54,7 +54,8 @@
 #' \code{impute_proxy} \tab Copy a value from the predictor variable.\cr
 #' \code{impute_rhd} \tab Random hot deck. Predictors are used to group the donors.\cr
 #' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data.\cr
-#'  \code{impute_pmm} \tab Predictive mean matching. \cr
+#' \code{impute_knn} \tab k-nearest neighbour imputation. Predictors are used to determine Gower's distance.\cr
+#' \code{impute_pmm} \tab Predictive mean matching. \cr
 #' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model.\cr
 #' \code{impute_rf} \tab Use \code{randomForest::randomForest} to train the predictive model.
 #' }
@@ -98,7 +99,7 @@ impute_rlm <- function(dat, model, add_residual = c("none","observed","normal"),
 lmwork <- function(dat, model, add_residual, fun, ...){
   stopifnot(inherits(model,"formula"))
 
-  predicted <- get_predicted(model, names(dat))
+  predicted <- get_imputed(model, dat)
   predicted <- predicted[sapply(dat[predicted], is.numeric)]
   formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
   
@@ -127,7 +128,7 @@ impute_const <- function(dat, model, add_residual = c("none","observed","normal"
   const <- as.numeric(deparse(model[[3]]))
   
   if (is.na(const)) const <- deparse(model[[3]])
-  predicted <- get_predicted(model,names(dat))
+  predicted <- get_imputed(model, dat)
   for ( p in predicted ){
     ina <- is.na(dat[p])
     nmiss <- sum(ina)
@@ -156,7 +157,7 @@ impute_median <- function(dat, model, add_residual = c("none","observed","normal
   stopifnot(inherits(model,"formula"))
   add_residual <- match.arg(add_residual)
   
-  predicted <- get_predicted(model,names(dat))
+  predicted <- get_imputed(model, dat)
   predicted <- predicted[sapply(dat[predicted], is.numeric)]
   predictors <- get_predictors(model,names(dat))
   
@@ -191,7 +192,7 @@ impute_median <- function(dat, model, add_residual = c("none","observed","normal
 impute_proxy <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(model,"formula"))
   add_residual <- match.arg(add_residual)
-  predicted <- get_predicted(model,names(dat))
+  predicted <- get_imputed(model,names(dat))
   predictor <- get_predictors(model, names(dat))
   if( length(predictor) != 1 )
     stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )

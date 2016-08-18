@@ -50,7 +50,7 @@ impute_rhd <- function(dat, model, pool=c("complete","univariate","multivariate"
   
   prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
 
-  predicted <- get_predicted(model,names(dat))
+  predicted <- get_imputed(model, dat)
   predictors <- get_predictors(model,names(dat))
   
   idat <- dat[predicted]
@@ -130,7 +130,7 @@ multi_rhd <- function(x){
 impute_shd <- function(dat, model, pool=c("complete","univariate","multivariate")
                        , order=c("locf","nocb"),...){
   stopifnot(inherits(model,"formula"))
-  predicted <- get_predicted(model,names(dat),no_pp_overlap=FALSE)
+  predicted <- get_imputed(model, dat)
   predictors <- get_predictors(model,names(dat))
   
   pool <- match.arg(pool)
@@ -246,7 +246,7 @@ impute_pmm <- function(dat, model, predictor=impute_lm
   
   # generate predictions by imputing with the 'predictor' function.
   idat <- predictor(dat=dat,model=model,...)
-  predicted <- get_predicted(model,names(dat))
+  predicted <- get_imputed(model, dat)
   predicted <- names(dat) %in% predicted
   # call appropriate workhorse imputation function
   switch(pool
@@ -320,7 +320,7 @@ impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"
   stopifnot(inherits(model,"formula"))
   pool <- match.arg(pool)
   
-  predicted <- get_predicted(model,names(dat),no_pp_overlap = FALSE)
+  predicted <- get_imputed(model, dat)
   predictors <- get_predictors(model,names(dat))
   
   # choose imputation function.

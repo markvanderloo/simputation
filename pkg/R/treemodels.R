@@ -14,8 +14,8 @@ impute_cart <- function(dat, model, add_residual=c("none","observed","normal"), 
 }
 
 worknl <- function(dat, model, add_residual, cp,...){
-  predictors <- get_predictors(model, names(dat))
-  predicted <- get_predicted(model, names(dat))
+
+  predicted <- get_imputed(model, dat)
   formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
 
   cp <- if (missing(cp)){
@@ -55,7 +55,7 @@ impute_rf <- function(dat, model, add_residual = c("none","observed","normal"), 
   stopifnot(inherits(model,"formula"))
   
   predictors <- get_predictors(model, names(dat))
-  predicted <- get_predicted(model, names(dat))
+  predicted <- get_imputed(model, dat)
   formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
   
   for ( i in seq_along(predicted) ){

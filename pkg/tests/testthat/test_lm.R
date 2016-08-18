@@ -1,15 +1,19 @@
 
 context("Formula parsing")
 test_that("formula parsing",{
-  expect_equal(get_predicted(x ~ y, c("x","y")),"x")
-  expect_equal(get_predicted( . ~ y,c("x","y","z")),c("x","z"))
-  expect_equal(get_predictors(x ~ .,vars=c("x","y")),".")
-  expect_error(get_predicted( x ~ y, c("y","z")),regexp="Trying")
-  expect_error(get_predicted( x ~ x, c("x","y")),regexp="Using")
-  expect_equal(get_predictors( x ~ y,c("x","y")),"y")
-  expect_error(get_predictors( x ~ y, "x"),regexp="not found")
+  expect_true(is_additive(expression(x)[[1]]))
+  expect_true(is_additive(expression(x + y)[[1]]))
+  expect_true(is_additive(expression(x - z)[[1]]))
+  expect_true(is_additive(expression(.-x)[[1]]))
+  expect_false(is_additive(expression(x*y)[[1]]))
+
+  expect_equal(get_imputed(x + y ~ z, dat=data.frame(x=0,y=0,z=0)  ),c("x","y"))
+  expect_equal(get_imputed(.-y ~ x + y, dat=data.frame(x=0,y=0,z=0)),c("x","z"))
+  expect_equal(get_imputed(. ~ x + y, dat=data.frame(x=0,y=0,z=0)),c("x","y","z"))
+  expect_error(get_imputed(x:y+z ~ x, dat=data.frame(x=0,y=0,z=0)))
   
 })
+
 
 context("Linear model imputation")
 test_that("stuff gets imputed",{

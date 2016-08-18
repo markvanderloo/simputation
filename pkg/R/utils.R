@@ -32,6 +32,41 @@ iapply <- function(X, MARGIN, FUN, ...){
 }
 
 
+
+
+get_imputed <- function(frm, dat){
+  if (!is_additive(frm[[2]])){
+    stop(sprintf("Invalid specification of imputed variables: '%s'",deparse(frm[[2]]))
+      ,call.=FALSE)
+  }
+  frm[[3]] <- frm[[2]]
+  frm[[2]] <- 1
+  colnames(attr(terms(frm, data=dat),"factors"))
+}
+
+
+
+
+# Chec expression against the following EBNF
+#
+# NAME      = <A valid R symbol name>
+# UNARYMIN  = "-"
+# BINOP     = "+" | "-"
+# PREDICTED = [UNARYMIN] NAME [BINOP PREDICTED] 
+#
+is_additive <- function(expr,val=TRUE){
+  if (length(expr)==1) return(is.symbol(expr)) 
+  
+  if (deparse(expr[[1]]) %in% c("+", "-") ){
+    for (i in seq_along(expr)[-1]) val <- val & is_additive(expr[[i]],val)
+  } else {
+    val <- FALSE
+  }
+  val
+}
+
+
+
 # frm: a formula
 # vars: variable names
 get_predictors <- function(frm, vars){
@@ -42,25 +77,4 @@ get_predictors <- function(frm, vars){
   v
 }
 
-
-# frm: a formula
-# vars: variable names
-# no_pp_overlap: check for overlap between predictors/predicted
-get_predicted <- function(frm, vars, no_pp_overlap=TRUE){
-  v <- all.vars(frm[[2]])
-  w <- all.vars(frm[[3]])
-  if ( identical(v , ".") ){ 
-    v <- vars
-    v <- setdiff(v,w)
-  }
-  if (no_pp_overlap && any(v %in% w))
-    stop(sprintf("Using '%s' as predictor and predicted"
-                  , paste(v,collapse=", ")), call.=FALSE)
-  w <- v[!v %in% vars]
-  if (length(w)>0)
-    stop(sprintf("Trying to impute variables not in data: %s"
-                 ,paste(w,collapse=", ")), call.=FALSE)
-  # TODO: allow '.' and minus signs
-  v
-}
 
