@@ -11,6 +11,14 @@ test_that("formula parsing",{
   expect_equal(get_imputed(.-y ~ x + y, dat=data.frame(x=0,y=0,z=0)),c("x","z"))
   expect_equal(get_imputed(. ~ x + y, dat=data.frame(x=0,y=0,z=0)),c("x","y","z"))
   expect_error(get_imputed(x:y+z ~ x, dat=data.frame(x=0,y=0,z=0)))
+
+  expect_equal(get_predictors(z ~ x + y, dat=data.frame(x=0,y=0,z=0)),c("x","y"))
+  expect_equal(get_predictors(z ~ .-y, dat=data.frame(x=0,y=0,z=0)), c("x","z"))
+  expect_equal(get_predictors(z ~ . , dat=data.frame(x=0,y=0,z=0)), c("x","y","z"))
+  
+  expect_null(get_predictors(x + y ~ 1, dat=data.frame(x=0,y=0,z=0), one_ok=TRUE))
+
+  expect_error(get_predictors(x ~ x:y+z, dat=data.frame(x=0,y=0,z=0)))
   
 })
 

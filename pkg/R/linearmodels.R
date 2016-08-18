@@ -159,7 +159,7 @@ impute_median <- function(dat, model, add_residual = c("none","observed","normal
   
   predicted <- get_imputed(model, dat)
   predicted <- predicted[sapply(dat[predicted], is.numeric)]
-  predictors <- get_predictors(model,names(dat))
+  predictors <- get_predictors(model, dat, one_ok=TRUE)
   
   # compute model values
   by <- if (length(predictors) == 0) list(rep(1,nrow(dat))) else as.list(dat[predictors])

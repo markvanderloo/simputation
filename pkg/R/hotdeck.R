@@ -51,7 +51,7 @@ impute_rhd <- function(dat, model, pool=c("complete","univariate","multivariate"
   prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
 
   predicted <- get_imputed(model, dat)
-  predictors <- get_predictors(model,names(dat))
+  predictors <- get_predictors(model, dat, one_ok = TRUE)
   
   idat <- dat[predicted]
   # ugly construction, but fast.
@@ -131,7 +131,7 @@ impute_shd <- function(dat, model, pool=c("complete","univariate","multivariate"
                        , order=c("locf","nocb"),...){
   stopifnot(inherits(model,"formula"))
   predicted <- get_imputed(model, dat)
-  predictors <- get_predictors(model,names(dat))
+  predictors <- get_predictors(model, dat, one_ok=TRUE)
   
   pool <- match.arg(pool)
   
@@ -321,7 +321,7 @@ impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"
   pool <- match.arg(pool)
   
   predicted <- get_imputed(model, dat)
-  predictors <- get_predictors(model,names(dat))
+  predictors <- get_predictors(model, dat)
   
   # choose imputation function.
   knn <- switch(pool

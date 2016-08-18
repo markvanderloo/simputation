@@ -68,13 +68,19 @@ is_additive <- function(expr,val=TRUE){
 
 
 # frm: a formula
-# vars: variable names
-get_predictors <- function(frm, vars){
-  v <- all.vars(frm[[3]])
-  w <-v[!v %in% c(vars,".")]
-  if( length(w) > 0)
-    stop(sprintf("Predictors %s not found in data",paste(w,collapse=", ")))
-  v
+# dat: data.frame
+# one_ok: is <lhs> ~ 1 also ok?
+get_predictors <- function(frm, dat, one_ok = FALSE){
+  if (one_ok) is_one <- frm[[3]] == 1
+  
+  if (  (one_ok && is_one) || is_additive(frm[[3]])  ){
+    frm[[2]] <- 1
+    colnames(attr(terms(frm, data=dat),"factors"))
+  } else {
+    stop(sprintf("Invalid specification of predictors %s:",deparse(frm[[3]])), call.=FALSE)    
+  }
+  # get rid of variables on lhs so predictors using "." get listed correctly.
+
 }
 
 
