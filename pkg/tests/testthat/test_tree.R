@@ -1,7 +1,26 @@
 
-context("Tree-based imputation")
-# NOTE: some tests are done in general loops in test_lm.
-test_that("CART-based imputation",{
+
+context("Tree models")
+# some testing is also done in test_lm
+test_that("CART models",{
+  
+  # impute categorical data
+  dat <- data.frame(x=rep(c("a","b"),each=50), y = 1:100)
+  dat[c(1,10),1] <- NA
+  expect_equal(
+    impute_cart(dat, x ~ y)
+  , data.frame(x=rep(c("a","b"),each=50), y = 1:100)
+  )
+  # impute logical data
+  dat <- data.frame(x=rep(c(TRUE,FALSE),each=50), y = 1:100)
+  dat[c(1,10),1] <- NA
+
+  expect_equal(
+  impute_cart(dat, x ~ y)
+  , data.frame(x=rep(c(TRUE,FALSE),each=50), y = 1:100)
+  )
+  
+
   dat <- data.frame(
     x = rnorm(100)
     , y = sample(c(TRUE,FALSE),100,replace=TRUE)
@@ -31,3 +50,5 @@ test_that("RandomForest imputation",{
   expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width, add_residual="normal"))))
    
 })
+
+
