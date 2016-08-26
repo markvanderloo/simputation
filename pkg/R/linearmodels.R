@@ -61,7 +61,7 @@
 #' }
 #'
 #' @seealso 
-#' 
+#' \href{../doc/intro.html}{Getting started with simputation}, 
 #' \code{\link[stats]{lm}} \code{\link[MASS]{rlm}} \code{\link[rpart]{rpart}}
 #' 
 #'

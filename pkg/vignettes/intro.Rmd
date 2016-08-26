@@ -17,8 +17,9 @@ library(simputation)
 
 ---
 
-This package offers a number of commonly used imputation methods, each with a similar and hopefully simple interfae. At the moment the following imputation methodology
-is supported.
+This package offers a number of commonly used imputation methods, each with a
+similar and hopefully simple interface. At the moment the following imputation
+methodology is supported.
 
 - Model based (optionally add [non-]parametric random residual)
     - linear regression 
