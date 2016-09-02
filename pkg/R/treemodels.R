@@ -54,7 +54,7 @@ worknl <- function(dat, model, add_residual, cp,...){
 impute_rf <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(model,"formula"))
   
-  predictors <- get_predictors(model, names(dat))
+  predictors <- get_predictors(model, dat)
   predicted <- get_imputed(model, dat)
   formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
   

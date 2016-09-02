@@ -48,7 +48,11 @@ test_that("RandomForest imputation",{
   expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width))))
   expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width, add_residual="observed"))))
   expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width, add_residual="normal"))))
-   
+
+  dat <- iris
+  dat[sample(1:nrow(iris),25),"Species"] <- NA
+  expect_true(!any(is.na(impute_rf(dat, Species ~.))))
+  
 })
 
 
