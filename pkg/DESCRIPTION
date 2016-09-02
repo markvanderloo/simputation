@@ -5,17 +5,15 @@ Title: Simple Imputation
 LazyData: no
 Type: Package
 LazyLoad: yes
-Authors@R: c( person("Mark", "van der Loo", role=c("aut","cre"),email="mark.vanderloo@gmail.com"))
-Description: Easy to use interfaces to a number of imputation methods that fit in the not-a-pipe operator of the
-    'magrittr' package.
-Version: 0.0.0.1
+Authors@R: c( person("Mark", "van der Loo",
+        role=c("aut","cre"),email="mark.vanderloo@gmail.com"))
+Description: Easy to use interfaces to a number of imputation methods
+        that fit in the not-a-pipe operator of the 'magrittr' package.
+Version: 0.0.0.0002
 Imports: stats, MASS, rpart, gower, randomForest
 URL: https://github.com/markvanderloo/simputation
 BugReports: https://github.com/markvanderloo/simputation/issues
 Date: 2016-08-25
-Suggests:
-    testthat,
-    knitr,
-    rmarkdown
+Suggests: testthat, knitr, rmarkdown
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
