@@ -38,7 +38,6 @@
 #'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
 #' @export
 impute_rhd <- function(dat, model, pool=c("complete","univariate","multivariate"), prob, ...){
-  
   stopifnot(inherits(model,"formula"))
   pool <- match.arg(pool)
   

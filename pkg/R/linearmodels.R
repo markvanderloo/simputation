@@ -23,10 +23,24 @@
 #' 
 #' @section Specifying the imputation model:
 #' 
-#' The left-hand-side of the formula object lists the variable or variables to 
-#' be imputed. The interpretation of the independent variables on the right-hand-side 
-#' depends on the underlying imputation model. 
+#' Formulas are of the form
 #' 
+#' \code{imputed variables ~ model specification [ | grouping variables ] }
+#' 
+#' The left-hand-side of the formula object lists the variable or variables to 
+#' be imputed. The interpretation of the independent variables on the
+#' right-hand-side depends on the underlying imputation model. If grouping
+#' variables are specified, the data set is split according to the values of
+#' those variables, and model estimation and imputation occur independently for
+#' each group.
+#' 
+#' 
+#' Grouping using \code{dplyr::group_by} is also supported. If groups are 
+#' defined in both the formula and using \code{dplyr::group_by}, the data is 
+#' grouped by the union of grouping variables. Any missing value in one of the
+#' grouping variables results in an error.
+#' 
+#' Grouping is ignored for \code{impute_const}.
 #' 
 #' @section Details:
 #' 
@@ -85,15 +99,18 @@
 #' @rdname impute_ 
 #' @export
 impute_lm <- function(dat, model, add_residual = c("none","observed","normal"), ...){
-  add_residual <- match.arg(add_residual)
-  lmwork(dat=dat, model=model, add_residual=add_residual, fun=stats::lm, ...)  
+    add_residual <- match.arg(add_residual)
+    do_by(dat, groups(dat,model), .fun=lmwork
+          , model=remove_groups(model), add_residual=add_residual, fun=lm, ...)
 }
+
 
 #' @rdname impute_
 #' @export
 impute_rlm <- function(dat, model, add_residual = c("none","observed","normal"), ...){
   add_residual <- match.arg(add_residual)
-  lmwork(dat=dat, model=model, add_residual=add_residual, fun=MASS::rlm, ...)  
+    do_by(dat, groups(dat,model), .fun=lmwork
+          , model=remove_groups(model), add_residual=add_residual, MASS::rlm, ...)
 }
 
 lmwork <- function(dat, model, add_residual, fun, ...){
@@ -122,9 +139,9 @@ lmwork <- function(dat, model, add_residual, fun, ...){
 impute_const <- function(dat, model, add_residual = c("none","observed","normal"),...){
   stopifnot(inherits(model,"formula"))
   add_residual <- match.arg(add_residual)
-  
+  model <- remove_groups(model)
   if (length(model[[3]]) != 1)
-    stop(sprintf("Emodelpected constant, got '%s'",deparse(model[[3]])))
+    stop(sprintf("Expected constant, got '%s'",deparse(model[[3]])))
   const <- as.numeric(deparse(model[[3]]))
   
   if (is.na(const)) const <- deparse(model[[3]])
@@ -159,7 +176,9 @@ impute_median <- function(dat, model, add_residual = c("none","observed","normal
   
   predicted <- get_imputed(model, dat)
   predicted <- predicted[sapply(dat[predicted], is.numeric)]
-  predictors <- get_predictors(model, dat, one_ok=TRUE)
+  predictors <- groups(dat,model)
+  model <- remove_groups(model)
+  predictors <- unique( c(predictors, get_predictors(model, dat, one_ok=TRUE)) )
   
   # compute model values
   by <- if (length(predictors) == 0) list(rep(1,nrow(dat))) else as.list(dat[predictors])
