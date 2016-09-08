@@ -37,8 +37,8 @@
 #' @param prob \code{[numeric]} Sampling probability weights (passed through to
 #'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
 #' @export
-impute_rhd <- function(dat, model, pool=c("complete","univariate","multivariate"), prob, ...){
-  stopifnot(inherits(model,"formula"))
+impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariate"), prob, ...){
+  stopifnot(inherits(formula,"formula"))
   pool <- match.arg(pool)
   
   rhd <- switch(pool
@@ -49,8 +49,8 @@ impute_rhd <- function(dat, model, pool=c("complete","univariate","multivariate"
   
   prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
 
-  predicted <- get_imputed(model, dat)
-  predictors <- get_predictors(model, dat, one_ok = TRUE)
+  predicted <- get_imputed(formula, dat)
+  predictors <- get_predictors(formula, dat, one_ok = TRUE)
   
   idat <- dat[predicted]
   # ugly construction, but fast.
@@ -126,11 +126,11 @@ multi_rhd <- function(x){
 #' @rdname impute_
 #' @param order Last Observation Carried Forward or Next Observarion Carried Backward
 #' @export
-impute_shd <- function(dat, model, pool=c("complete","univariate","multivariate")
+impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariate")
                        , order=c("locf","nocb"),...){
-  stopifnot(inherits(model,"formula"))
-  predicted <- get_imputed(model, dat)
-  predictors <- get_predictors(model, dat, one_ok=TRUE)
+  stopifnot(inherits(formula,"formula"))
+  predicted <- get_imputed(formula, dat)
+  predictors <- get_predictors(formula, dat, one_ok=TRUE)
   
   pool <- match.arg(pool)
   
@@ -237,15 +237,15 @@ multi_shd <- function(x){
 #'   predictive mean matching. Any of the \code{impute_} functions of this
 #'   package (it makes no sense to use a hot-deck imputation).
 #' @export
-impute_pmm <- function(dat, model, predictor=impute_lm
+impute_pmm <- function(dat, formula, predictor=impute_lm
   , pool=c('complete','univariate','multivariate'), ...){
 
   # input check
   pool <- match.arg(pool)
   
   # generate predictions by imputing with the 'predictor' function.
-  idat <- predictor(dat=dat,model=model,...)
-  predicted <- get_imputed(model, dat)
+  idat <- predictor(dat=dat,formula=formula,...)
+  predicted <- get_imputed(formula, dat)
   predicted <- names(dat) %in% predicted
   # call appropriate workhorse imputation function
   switch(pool
@@ -257,7 +257,7 @@ impute_pmm <- function(dat, model, predictor=impute_lm
 }
 
 # dat: original data
-# idat: model-imputed data
+# idat: formula-imputed data
 # predicted [logical] which variables have been imputed
 single_pmm <- function(dat, idat, predicted){
   for ( p in which(predicted) ){
@@ -270,7 +270,7 @@ single_pmm <- function(dat, idat, predicted){
 }
 
 # dat: original data
-# idat: model-imputed data
+# idat: formula-imputed data
 # predicted [logical] which variables have been imputed
 # only_complete:[logical] TRUE: complete cases only, FALSE: by missingness pattern
 # (only_complete=FALSE)
@@ -315,12 +315,12 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
 #' @rdname impute_
 #' @param k Number of nearest neighbours to draw the donor from.
 #' @export
-impute_knn <- function(dat, model, pool=c("complete","univariate","multivariate"), k=5, ...){
-  stopifnot(inherits(model,"formula"))
+impute_knn <- function(dat, formula, pool=c("complete","univariate","multivariate"), k=5, ...){
+  stopifnot(inherits(formula,"formula"))
   pool <- match.arg(pool)
   
-  predicted <- get_imputed(model, dat)
-  predictors <- get_predictors(model, dat)
+  predicted <- get_imputed(formula, dat)
+  predictors <- get_predictors(formula, dat)
   
   # choose imputation function.
   knn <- switch(pool

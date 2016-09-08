@@ -8,15 +8,15 @@
 #'    formula.
 #'    
 #' @export
-impute_cart <- function(dat, model, add_residual=c("none","observed","normal"), cp, ...){
+impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp, ...){
   add_residual <- match.arg(add_residual)
-  worknl(dat=dat, model=model, add_residual=add_residual, cp, ...)
+  worknl(dat=dat, formula=formula, add_residual=add_residual, cp, ...)
 }
 
-worknl <- function(dat, model, add_residual, cp,...){
+worknl <- function(dat, formula, add_residual, cp,...){
 
-  predicted <- get_imputed(model, dat)
-  formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
+  predicted <- get_imputed(formula, dat)
+  formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
 
   cp <- if (missing(cp)){
     rep(0,length(predicted))
@@ -51,12 +51,12 @@ worknl <- function(dat, model, add_residual, cp,...){
 
 #' @rdname impute_
 #' @export
-impute_rf <- function(dat, model, add_residual = c("none","observed","normal"), ...){
-  stopifnot(inherits(model,"formula"))
+impute_rf <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+  stopifnot(inherits(formula,"formula"))
   
-  predictors <- get_predictors(model, dat)
-  predicted <- get_imputed(model, dat)
-  formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
+  predictors <- get_predictors(formula, dat)
+  predicted <- get_imputed(formula, dat)
+  formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
   
   for ( i in seq_along(predicted) ){
     p <- predicted[i]

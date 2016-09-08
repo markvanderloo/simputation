@@ -5,7 +5,7 @@
 #'
 #' @param dat \code{[data.frame]}, with variables to be imputed and their
 #'   predictors.
-#' @param model \code{[formula]} imputation model description (see Details below).
+#' @param formula \code{[formula]} imputation model description (see Details below).
 #' @param add_residual \code{[character]} Type of residual to add. \code{"normal"} 
 #'   means that the imputed value is drawn from \code{N(mu,sd)} where \code{mu}
 #'   and \code{sd} are estimated from the model's residuals (\code{mu} should equal
@@ -25,7 +25,7 @@
 #' 
 #' Formulas are of the form
 #' 
-#' \code{imputed variables ~ model specification [ | grouping variables ] }
+#' \code{IMPUTED_VARIABLES ~ MODEL_SPECIFICATION [ | GROUPING_VARIABLES ] }
 #' 
 #' The left-hand-side of the formula object lists the variable or variables to 
 #' be imputed. The interpretation of the independent variables on the
@@ -98,27 +98,27 @@
 #' @name impute_
 #' @rdname impute_ 
 #' @export
-impute_lm <- function(dat, model, add_residual = c("none","observed","normal"), ...){
+impute_lm <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
     add_residual <- match.arg(add_residual)
-    do_by(dat, groups(dat,model), .fun=lmwork
-          , model=remove_groups(model), add_residual=add_residual, fun=lm, ...)
+    do_by(dat, groups(dat,formula), .fun=lmwork
+          , formula=remove_groups(formula), add_residual=add_residual, fun=lm, ...)
 }
 
 
 #' @rdname impute_
 #' @export
-impute_rlm <- function(dat, model, add_residual = c("none","observed","normal"), ...){
+impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
   add_residual <- match.arg(add_residual)
-    do_by(dat, groups(dat,model), .fun=lmwork
-          , model=remove_groups(model), add_residual=add_residual, MASS::rlm, ...)
+    do_by(dat, groups(dat,formula), .fun=lmwork
+          , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm, ...)
 }
 
-lmwork <- function(dat, model, add_residual, fun, ...){
-  stopifnot(inherits(model,"formula"))
+lmwork <- function(dat, formula, add_residual, fun, ...){
+  stopifnot(inherits(formula,"formula"))
 
-  predicted <- get_imputed(model, dat)
+  predicted <- get_imputed(formula, dat)
   predicted <- predicted[sapply(dat[predicted], is.numeric)]
-  formulas <- paste(predicted, "~" ,deparse(model[[3]]) )
+  formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
   
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
@@ -136,16 +136,16 @@ lmwork <- function(dat, model, add_residual, fun, ...){
 
 #' @rdname impute_
 #' @export
-impute_const <- function(dat, model, add_residual = c("none","observed","normal"),...){
-  stopifnot(inherits(model,"formula"))
+impute_const <- function(dat, formula, add_residual = c("none","observed","normal"),...){
+  stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
-  model <- remove_groups(model)
-  if (length(model[[3]]) != 1)
-    stop(sprintf("Expected constant, got '%s'",deparse(model[[3]])))
-  const <- as.numeric(deparse(model[[3]]))
+  formula <- remove_groups(formula)
+  if (length(formula[[3]]) != 1)
+    stop(sprintf("Expected constant, got '%s'",deparse(formula[[3]])))
+  const <- as.numeric(deparse(formula[[3]]))
   
-  if (is.na(const)) const <- deparse(model[[3]])
-  predicted <- get_imputed(model, dat)
+  if (is.na(const)) const <- deparse(formula[[3]])
+  predicted <- get_imputed(formula, dat)
   for ( p in predicted ){
     ina <- is.na(dat[p])
     nmiss <- sum(ina)
@@ -170,24 +170,24 @@ impute_const <- function(dat, model, add_residual = c("none","observed","normal"
 
 #' @rdname impute_
 #' @export
-impute_median <- function(dat, model, add_residual = c("none","observed","normal"), ...){
-  stopifnot(inherits(model,"formula"))
+impute_median <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+  stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   
-  predicted <- get_imputed(model, dat)
+  predicted <- get_imputed(formula, dat)
   predicted <- predicted[sapply(dat[predicted], is.numeric)]
-  predictors <- groups(dat,model)
-  model <- remove_groups(model)
-  predictors <- unique( c(predictors, get_predictors(model, dat, one_ok=TRUE)) )
+  predictors <- groups(dat,formula)
+  formula <- remove_groups(formula)
+  predictors <- unique( c(predictors, get_predictors(formula, dat, one_ok=TRUE)) )
   
-  # compute model values
+  # compute formula values
   by <- if (length(predictors) == 0) list(rep(1,nrow(dat))) else as.list(dat[predictors])
   # silence the warning about producing NA's (give specific warning later)
   medians <- withCallingHandlers(
     stats::aggregate(dat[predicted],by=by, FUN=stats::median, na.rm=TRUE)
     , warning=function(w) invokeRestart("muffleWarning") 
   )
-  # create nrow(data) X npredictors data.frame with model values.
+  # create nrow(data) X npredictors data.frame with formula values.
   imp <- if (length(predictors) == 0) 
     cbind(by[[1]], medians) # about 75 times faster than merge
   else 
@@ -208,11 +208,11 @@ impute_median <- function(dat, model, add_residual = c("none","observed","normal
 
 #' @rdname impute_
 #' @export
-impute_proxy <- function(dat, model, add_residual = c("none","observed","normal"), ...){
-  stopifnot(inherits(model,"formula"))
+impute_proxy <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+  stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
-  predicted <- get_imputed(model,names(dat))
-  predictor <- get_predictors(model, names(dat))
+  predicted <- get_imputed(formula,names(dat))
+  predictor <- get_predictors(formula, names(dat))
   if( length(predictor) != 1 )
     stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )
   
