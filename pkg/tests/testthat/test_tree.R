@@ -55,4 +55,13 @@ test_that("RandomForest imputation",{
   
 })
 
-
+test_that("grouped imputation",{
+  dat <- data.frame(
+    x = 1:100
+    , y = rep(LETTERS[1:4],times=25)
+    , z = rep(c("a","b"),each=50)
+  )
+  dat[2,1] <- NA
+  expect_lt(impute_cart(dat, x ~ y|z)[2,1],impute_cart(dat, x ~ y)[2,1])
+  expect_lt(impute_rf(dat, x ~ y|z)[2,1],impute_rf(dat, x ~ y)[2,1])
+})

@@ -151,14 +151,6 @@ test_that("grouped imputation",{
   
 })
 
-#   dat <- data.frame(
-#     x = c(1,2,NA)
-#     , y = 1:3
-#     , z = c("a","b","b")
-#   )
-# devtools::load_all('pkg')
-# impute_rhd(dat, x ~ 1|z,pool="multivariate")
-# impute_rhd(dat, x ~ z,pool="multivariate")
 
 
 
