@@ -97,42 +97,69 @@ test_that("pmm-imputation",{
 })
 
 test_that("grouped imputation",{
+  pools <- c("complete","univariate","multivariate")
+  ## random hot deck
   dat <- data.frame(
     x = c(1,2,NA)
     , y = 1:3
     , z = c("a","b","b")
   )
-  expect_equal(impute_rhd(dat, x ~ z,pool="univariate")[,1],c(1,2,2))
-  expect_equal(impute_rhd(dat, x ~ z,pool="complete")[,1],c(1,2,2))
-  expect_equal(impute_rhd(dat, x ~ z,pool="multivariate")[,1],c(1,2,2))
+  
+  for ( pool in  pools ){
+    expect_equal(impute_rhd(dat, x ~ z,pool=pool)[,1],c(1,2,2)
+      , info=sprintf("random hotdeck-1, pool=%s",pool))
+    expect_equal(impute_rhd(dat, x ~ 1|z,pool=pool)
+      , impute_rhd(dat, x ~ z,pool=pool)
+      ,  info=sprintf("random hotdeck-2, pool=%s",pool))
+  }
+  
+  # sequential hot deck
+  dat <- data.frame(
+    x = c(1,2,NA,4)
+    , z = c("a","b","a","b")
+  )
+  for (pool in pools){
+   expect_equal(impute_shd(dat, x ~ 1,pool=pool)[,1],c(1,2,2,4)
+      , info=sprintf("seq. hot deck-1, pool=%s",pool))
+   expect_equal(impute_shd(dat, x~1|z, pool=pool)[,1],c(1,2,1,4)
+      , info=sprintf("seq. hot deck, pool =%s",pool))
+  }
+  
+  # predictive mean matching
+  dat <- data.frame(
+     x = c(1,2.2,3,4,1,2,3,4)
+    , y = c(1,NA,3,4,1,2,3,4)
+    , z = rep(c("a","b"),each=4))
+  for ( pool in pools){
+    expect_equal(impute_pmm(dat,y~x,predictor=impute_lm,pool=pool)[2,2], 2)
+    expect_equal(impute_pmm(dat,y~x|z,predictor=impute_lm,pool=pool)[2,2],3)
+  }
+  
+  # knn imputation
+  dat <- data.frame(
+    x = c(1,2,3,1,2,3)
+    , y = c(1,NA,3,1,2,3)
+    , z = rep(c("a","b"),each=3)
+  )
+  for (pool in pools){
+    expect_equal(impute_knn(dat, y ~ x, k=1,pool=pool)[2,2], 2
+       , info=sprintf("knn-1, pool = %s",pool))
+    expect_equal(impute_knn(dat, y ~ x | z, k=1,pool=pool)[2,2], 1
+       , info=sprintf("knn-2, pool = %s",pool))
+  }
+  
   
 })
 
-
-
-# dat <- data.frame(
-#   x = c(2,NA,4)
-#   , y = c(NA,NA,8)
-# )
-# impute_rhd(dat, x + y ~ 1)
-# 
-# 
-# x <- dat
-# x$PROB..TMP <- 1
-
-
-# dat <- data.frame(
-#   x = c(1,2,NA)
-#   , y = 1:3
-#   , z = c("a","b","b")
-# )
+#   dat <- data.frame(
+#     x = c(1,2,NA)
+#     , y = 1:3
+#     , z = c("a","b","b")
+#   )
 # devtools::load_all('pkg')
-# impute_rhd(dat, x ~ z,pool="complete")
-# 
-# dat$PROB..TMP <- 1
-# 
-# undebug(cc_rhd)
-# x <- dat[2:3,c(1,4)]
+# impute_rhd(dat, x ~ 1|z,pool="multivariate")
+# impute_rhd(dat, x ~ z,pool="multivariate")
+
 
 
 

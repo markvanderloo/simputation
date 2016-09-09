@@ -53,8 +53,7 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
   grps <- groups(dat,formula)
   formula <- remove_groups(formula)
   predictors <- get_predictors(formula, dat, one_ok = TRUE)
-  predictors <- unique(predictors, grps)
-  
+  predictors <- unique(c(predictors, grps))
   
   idat <- dat[predicted]
   # ugly construction, but fast.
