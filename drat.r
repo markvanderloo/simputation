@@ -6,9 +6,10 @@ suppressPackageStartupMessages({
 })
 
  
-"Usage: drat.sh [commit] [--pkg FILE] [--dratrepo FOLDER] 
+"Usage: drat.sh [nocommit] [nobadge] [--pkg FILE] [--dratrepo FOLDER] 
 
-commit commit after insert? 
+nocommit commit after insert? 
+nobadge update drat badge?
 --pkg FILE The tarball to insert in the drat repo (by default the tarball in ./output)
 --dratrepo FOLDER path to root of drat repo [default: ../drat]
 " -> doc
@@ -26,10 +27,17 @@ if (!file.exists(pkg)){
   stop(sprintf("%s not found",pkg))
 }
 
-drat::insertPackage(pkg, repodir=opt$dratrepo, pullfirst=TRUE, commit=opt$commit)
+drat::insertPackage(pkg, repodir=opt$dratrepo, pullfirst=TRUE, commit=!opt$nocommit)
+
+if (!opt$nobadge){
+  readme <- paste(readLines("README.md"),collapse="\n")
+  ver <- read.dcf('pkg/DESCRIPTION')[1,"Version"]
+  readme <- sub("drat-.*?-green",paste0("drat-",ver,"-green"),readme)
+  write(readme, "README.md")
+}
 
 cat(sprintf("Inserted %s into %s %s\n"
   , pkg
   , opt$dratrepo
-  , if(opt$commit) "and committed" else ""
+  , if(!opt$nocommit) "and committed" else ""
 ))

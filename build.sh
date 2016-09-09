@@ -26,6 +26,7 @@ echo "######## Increasing build number..."
    R --slave << EOF 
       dcf <- read.dcf('pkg/DESCRIPTION')
       v <- strsplit(dcf[1,'Version'],'.',fixed=TRUE)[[1]]
+      if (length(v[4])<4) v[4] <- 0
       v[4] <- sprintf('%04d',as.numeric(v[4])+1)
       dcf[,'Version'] <- paste(v,collapse='.')
       write.dcf(dcf,file='pkg/DESCRIPTION')
