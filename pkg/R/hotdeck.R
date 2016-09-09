@@ -50,7 +50,11 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
   prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
 
   predicted <- get_imputed(formula, dat)
+  grps <- groups(dat,formula)
+  formula <- remove_groups(formula)
   predictors <- get_predictors(formula, dat, one_ok = TRUE)
+  predictors <- unique(predictors, grps)
+  
   
   idat <- dat[predicted]
   # ugly construction, but fast.
@@ -129,12 +133,20 @@ multi_rhd <- function(x){
 impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariate")
                        , order=c("locf","nocb"),...){
   stopifnot(inherits(formula,"formula"))
+  pool <- match.arg(pool)
+  order <- match.arg(order)
+  
+  do_by(dat, groups(dat,formula), .fun=shd_work
+    , formula=remove_groups(formula), pool=pool, order=order, ...)
+}
+
+shd_work <- function(dat, formula, pool=c("complete","univariate","multivariate")
+                       , order=c("locf","nocb"),...){
+  stopifnot(inherits(formula,"formula"))
   predicted <- get_imputed(formula, dat)
   predictors <- get_predictors(formula, dat, one_ok=TRUE)
   
-  pool <- match.arg(pool)
   
-  order <- match.arg(order)
   ord <- if( length(predictors) > 0) order(dat[predictors],decreasing=FALSE) else seq_len(nrow(dat)) 
   if (order=="locf") ord <- rev(ord)
   
@@ -155,7 +167,6 @@ impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariat
   dat[predicted] <- idat[ind,,drop=FALSE]
   dat
 }
-
 
 # determine indices of donors for recipients
 donor_indices <- function(x, is_present, is_missing){
@@ -241,7 +252,16 @@ impute_pmm <- function(dat, formula, predictor=impute_lm
   , pool=c('complete','univariate','multivariate'), ...){
 
   # input check
+  stopifnot(inherits(formula,"formula"))
   pool <- match.arg(pool)
+  
+  # generate predictions by imputing with the 'predictor' function.
+  do_by(dat, groups(dat,formula), .fun=pmm_work
+    , formula=remove_groups(formula), pool=pool, ...)
+}
+
+pmm_work <- function(dat, formula, predictor=impute_lm
+                       , pool=c('complete','univariate','multivariate'), ...){
   
   # generate predictions by imputing with the 'predictor' function.
   idat <- predictor(dat=dat,formula=formula,...)
@@ -249,12 +269,15 @@ impute_pmm <- function(dat, formula, predictor=impute_lm
   predicted <- names(dat) %in% predicted
   # call appropriate workhorse imputation function
   switch(pool
-    , complete = multi_cc_pmm(dat,idat,predicted, TRUE)
-    , univariate = single_pmm(dat,idat,predicted)
-    , multivariate = multi_cc_pmm(dat,idat,predicted,FALSE)
+     , complete = multi_cc_pmm(dat,idat,predicted, TRUE)
+     , univariate = single_pmm(dat,idat,predicted)
+     , multivariate = multi_cc_pmm(dat,idat,predicted,FALSE)
   )
   
 }
+
+
+
 
 # dat: original data
 # idat: formula-imputed data
