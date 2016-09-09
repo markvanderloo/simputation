@@ -6,7 +6,7 @@ output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Getting started with simputation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,7 +24,7 @@ methodology is supported.
 - Model based (optionally add [non-]parametric random residual)
     - linear regression 
     - robust linear regression
-    - CART models
+    - CART models (decision trees)
     - Random forest
 - Donor imputation (including various donor pool specifications)
     - k-nearest neigbour (based on [gower](https://cran.r-project.org/package=gower)'s distance)
@@ -42,10 +42,19 @@ methodology is supported.
 A call to an imputation function has the following structure.
 
 ```{r, eval=FALSE}
-impute_<model>(data, formula, <optionally, model-specific options>)
+impute_<model>(data, formula, [model-specific options])
 ```
 The output is similar to the ```data``` argument, except that empty values are
 imputed (where possible) using the specified model.
+
+The `formula` argument speciefies the variables to be imputed, the model
+specification for `<model>` and possibly the grouping of the dataset.
+The structure of a formula object is as follows:
+```{r, eval=FALSE}
+IMPUTED ~ MODEL_SPECIFICATION [ | GROUPING ]
+```
+where the part between `[]` is optional.
+
 
 In the following, we assume that the reader already has some familiarity with
 the use of formulas in R (e.g. when specifying linear models) and statistical
@@ -121,6 +130,38 @@ da6 <- impute_lm(dat, . - Species ~ 0 + Species, add_residual = "normal")
 head(da6)
 ```
 where `Species` on the right-hand-side defines the grouping variable.
+
+### Grouping data for imputation
+
+Use `|` in the `formula` argument to specify groups. 
+```{r}
+# New data set, leaving Species intact
+dat <- iris
+dat[1:3,1] <- dat[3:7,2] <- NA
+
+# split dat into groups according to 'Species', impute, combine and return.
+da8 <- impute_lm(dat, Sepal.Length ~ Petal.Width | Species)
+head(da8)
+```
+
+If one or more grouping variables are specified (multiple are specified by separating them with `+`), imputation takes place as follows.
+
+1. Split the data into subsets according to the values of the grouping variables.
+2. Estimate the model for each data subset and impute.
+3. Combine the imputed subsets.
+
+Simputation also integrates with the [dplyr](https://cran.r-project.org/package=dplyr) package and recognizes grouping specified with `group_by`.
+```{r,eval=FALSE}
+library(magrittr)
+library(dplyr)
+
+dat <- iris
+dat[1:3,1] <- dat[3:7,2] <- NA
+
+dat %>% group_by(Species) %>% 
+  impute_lm(Sepal.Length ~ Petal.Width)
+```
+
 
 
 
