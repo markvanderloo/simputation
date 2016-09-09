@@ -9,11 +9,13 @@
 #'    
 #' @export
 impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp, ...){
+  stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
-  worknl(dat=dat, formula=formula, add_residual=add_residual, cp, ...)
+  do_by(dat, groups(dat,formula), .fun=cart_work
+        , formula=remove_groups(formula), add_residual=add_residual, cp , ...)
 }
 
-worknl <- function(dat, formula, add_residual, cp,...){
+cart_work <- function(dat, formula, add_residual, cp,...){
 
   predicted <- get_imputed(formula, dat)
   formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
@@ -53,6 +55,13 @@ worknl <- function(dat, formula, add_residual, cp,...){
 #' @export
 impute_rf <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(formula,"formula"))
+  add_residual <- match.arg(add_residual)
+  do_by(dat, groups(dat,formula), .fun=rf_work
+    , formula=remove_groups(formula), add_residual=add_residual, ...)
+}
+
+rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+  stopifnot(inherits(formula,"formula"))
   
   predictors <- get_predictors(formula, dat)
   predicted <- get_imputed(formula, dat)
@@ -73,7 +82,6 @@ impute_rf <- function(dat, formula, add_residual = c("none","observed","normal")
   }
   dat
 }
-
 
 
 
