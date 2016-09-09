@@ -17,8 +17,8 @@ run_model <- function(fun, ...){
 }
 
 # reasonable stopper/warner
-stopf <- function(fmt,...) stop(sprintf(fmt,...), .call.=FALSE)
-warnf <- function(fmt,...) warning(sprintf(fmt,...), .call=FALSE)
+stopf <- function(fmt,...) stop(sprintf(fmt,...), call.=FALSE)
+warnf <- function(fmt,...) warning(sprintf(fmt,...), call.=FALSE)
 
 # Give 'sample' reasonable behaviour
 isample <- function(x, size, replace=FALSE, prob=NULL){
