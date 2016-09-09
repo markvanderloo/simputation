@@ -72,3 +72,20 @@ test_that("stuff gets imputed",{
   
 })
 
+
+
+test_that("grouped imputation",{
+  wom <- women
+  wom$foo <- c(rep("a",7),rep("b",8))
+  wom[c(1,15),1] <- NA
+
+  expect_equal(impute_lm(wom, height ~ 0 + foo), impute_lm(wom, height ~ 1 | foo))
+  expect_equal(impute_rlm(wom, height ~ 0 + foo), impute_lm(wom, height ~ 1 | foo))
+  expect_equal(impute_median(wom, height ~ foo),impute_median(wom, height ~ 1|foo))
+  expect_equal(impute_proxy(wom, height ~ weight), impute_proxy(wom, height ~ weight | foo))
+  expect_equal(impute_const(wom, height ~ 7), impute_const(wom, height ~ 7 | foo))
+  
+})
+
+
+

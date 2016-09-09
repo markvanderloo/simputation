@@ -109,8 +109,8 @@ impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
 #' @export
 impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
   add_residual <- match.arg(add_residual)
-    do_by(dat, groups(dat,formula), .fun=lmwork
-          , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm, ...)
+  do_by(dat, groups(dat,formula), .fun=lmwork
+    , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm, ...)
 }
 
 lmwork <- function(dat, formula, add_residual, fun, ...){
@@ -211,6 +211,7 @@ impute_median <- function(dat, formula, add_residual = c("none","observed","norm
 impute_proxy <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
+  formula <- remove_groups(formula)
   predicted <- get_imputed(formula,names(dat))
   predictor <- get_predictors(formula, names(dat))
   if( length(predictor) != 1 )

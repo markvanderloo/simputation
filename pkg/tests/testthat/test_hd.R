@@ -96,8 +96,43 @@ test_that("pmm-imputation",{
   
 })
 
+test_that("grouped imputation",{
+  dat <- data.frame(
+    x = c(1,2,NA)
+    , y = 1:3
+    , z = c("a","b","b")
+  )
+  expect_equal(impute_rhd(dat, x ~ z,pool="univariate")[,1],c(1,2,2))
+  expect_equal(impute_rhd(dat, x ~ z,pool="complete")[,1],c(1,2,2))
+  expect_equal(impute_rhd(dat, x ~ z,pool="multivariate")[,1],c(1,2,2))
+  
+})
 
 
+
+# dat <- data.frame(
+#   x = c(2,NA,4)
+#   , y = c(NA,NA,8)
+# )
+# impute_rhd(dat, x + y ~ 1)
+# 
+# 
+# x <- dat
+# x$PROB..TMP <- 1
+
+
+# dat <- data.frame(
+#   x = c(1,2,NA)
+#   , y = 1:3
+#   , z = c("a","b","b")
+# )
+# devtools::load_all('pkg')
+# impute_rhd(dat, x ~ z,pool="complete")
+# 
+# dat$PROB..TMP <- 1
+# 
+# undebug(cc_rhd)
+# x <- dat[2:3,c(1,4)]
 
 
 

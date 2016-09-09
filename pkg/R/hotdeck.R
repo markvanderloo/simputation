@@ -65,7 +65,6 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
   # split-apply-combine, the base-R way.
   dat[predicted] <- unsplit( lapply( split(idat, spl), rhd ), spl)[predicted]
 
-  # remove column with probability weights
   dat
 }
 
@@ -75,11 +74,12 @@ cc_rhd <- function(x){
   ic <- complete.cases(x)
   if ( !any(ic) || all(ic) ) return(x) # no donors or no missings
   prb <- x$PROB..TMP[ic]
-  nna <- sum(!ic)
+  ina <- is.na(x)
+  nna <- sum(ina)
   jdn <- isample(which(ic),size=nna, replace=TRUE, prob=prb) 
   
-  ina <- is.na(x)
-  x[ina] <- x[jdn,,drop=FALSE][ina]
+  A <- array(c(jdn,which(ina,arr.ind=TRUE)[,2]), dim=c(nna,2))
+  x[ina] <- x[A]
   x
 }
 
@@ -342,6 +342,13 @@ impute_knn <- function(dat, formula, pool=c("complete","univariate","multivariat
   stopifnot(inherits(formula,"formula"))
   pool <- match.arg(pool)
   
+  do_by(dat, groups(dat,formula), .fun=knn_work
+    , formula=remove_groups(formula), pool=pool, k=k, ...)
+}
+
+
+knn_work <- function(dat, formula, pool=c("complete","univariate","multivariate"), k, ...){
+  
   predicted <- get_imputed(formula, dat)
   predictors <- get_predictors(formula, dat)
   
@@ -354,6 +361,8 @@ impute_knn <- function(dat, formula, pool=c("complete","univariate","multivariat
  
   knn(dat, imp_vars = predicted, match_vars = predictors, k=k)
 }
+
+
 
 ## knn-imputation, complete cases as donor pool
 cc_knn <- function(dat, imp_vars, match_vars, k){
