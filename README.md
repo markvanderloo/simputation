@@ -44,7 +44,11 @@ dat %>%
 
 # Installation
 
-This package is not on CRAN yet,but thanks to the awesome [drat](http://cran.r-project.org/package=drat) package, installation is easy. If you use the OS whose name shall not be spoken, first install [Rtools](https://cran.r-project.org/bin/windows/Rtools/)
+```r
+install.packages("simputation")
+```
+
+Beta versions can be installed from my [drat](http://cran.r-project.org/package=drat) repo. If you use the OS whose name shall not be spoken, first install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
 ```r
 if(!require(drat)) install.packages("drat")
 drat::addRepo("markvanderloo")
