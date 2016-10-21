@@ -12,6 +12,10 @@
 #'   zero in most cases). If \code{add_residual = "observed"}, residuals are drawn
 #'   (with replacement) from the model's residuals. Ignored for non-numeric 
 #'   predicted variables.
+#'  
+#' @param na.action \code{[function]} what to do with missings in training data.
+#'   By default cases with missing values in predicted or predictors are omitted
+#'   (see `Missings in training data').
 #' @param ... further arguments passed to 
 #' \itemize{
 #' \item{\code{\link[stats]{lm}} for \code{impute_lm}}
@@ -54,7 +58,35 @@
 #' \item{If a model cannot be fitted, e.g. because the imputed model is missing, a warning
 #' is emitted and for that variable no imputation will take place.}
 #' }
+#'
+#' @section Missings in training data:
 #' 
+#' For model-based imputation, including those based on (robust) linear models, 
+#' cart models and random forests, there is an option called \code{na.action}
+#' that specifies what to do with missings in training data. The default action
+#' is to train models on data where both the predicted and predictor variables
+#' are available. Some of the interesting options are
+#' 
+#' \itemize{
+#' \item{\code{\link[stats]{na.omit}}: omit cases where predictor or predicted
+#'   is missing. This is the default.} 
+#'   \item{\code{rpart::\link[rpart]{na.rpart}}: omit cases where the predicted is
+#'   missing but keep cases where one or more predictors are missing. Relevant
+#'   for \code{impute_cart}}
+#' \item{\code{randomForest::\link[randomForest]{na.roughfix}} Temporarily impute all
+#'   predictors and predicted with the column median (for numeric data) or the
+#'   mode (for categorical data) in order to fit the model. }
+#' }
+#' 
+#' 
+#' 
+#' 
+#'
+#'
+#'  
+#'  
+#'  
+#'    
 #' 
 #' @section Model descriptions:
 #' 
@@ -67,7 +99,7 @@
 #' \code{impute_const} \tab Impute a constant value \cr
 #' \code{impute_proxy} \tab Copy a value from the predictor variable.\cr
 #' \code{impute_rhd} \tab Random hot deck. Predictors are used to group the donors.\cr
-#' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data.\cr
+#' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data (use \code{~ 1} for no sorting).\cr
 #' \code{impute_knn} \tab k-nearest neighbour imputation. Predictors are used to determine Gower's distance.\cr
 #' \code{impute_pmm} \tab Predictive mean matching. \cr
 #' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model.\cr
@@ -98,22 +130,23 @@
 #' @name impute_
 #' @rdname impute_ 
 #' @export
-impute_lm <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
+                      ,na.action=na.omit, ...){
     add_residual <- match.arg(add_residual)
     do_by(dat, groups(dat,formula), .fun=lmwork
-          , formula=remove_groups(formula), add_residual=add_residual, fun=lm, ...)
+          , formula=remove_groups(formula), add_residual=add_residual, fun=lm, na.action=na.action, ...)
 }
 
 
 #' @rdname impute_
 #' @export
-impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), na.action=na.omit,...){
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=lmwork
-    , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm, ...)
+    , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm, na.action=na.action, ...)
 }
 
-lmwork <- function(dat, formula, add_residual, fun, ...){
+lmwork <- function(dat, formula, add_residual, fun, na.action, ...){
   stopifnot(inherits(formula,"formula"))
 
   predicted <- get_imputed(formula, dat)
@@ -125,7 +158,7 @@ lmwork <- function(dat, formula, add_residual, fun, ...){
     ina <- is.na(dat[,p])
     nmiss <- sum(ina)
     if (!any(ina) ) next # skip if no missings
-    m <- run_model(fun, formula=as.formula(formulas[i]), data=dat,...)
+    m <- run_model(fun, formula=as.formula(formulas[i]), data=dat,na.action=na.action,...)
     res <- get_res(nmiss = sum(ina), residuals = residuals(m), type = add_residual)
     dat[ina, p] <- stats::predict(m, newdat = dat[ina,,drop=FALSE]) + res
   }

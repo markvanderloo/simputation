@@ -23,7 +23,7 @@ An R package to make imputation simple. Currently supported methods include
   - Proxy imputation (copy from other variable) 
 
 
-# Example usage
+### Example usage
 
 Create some data suffering from missings
 ```r
@@ -42,7 +42,12 @@ dat %>%
   head(10)
 ```
 
-# Installation
+### Materials
+
+- A [blogpost](http://www.markvanderloo.eu/yaRb/2016/09/13/announcing-the-simputation-package-make-imputation-simple/) introducing the package
+- The introductory [vignette](https://cran.r-project.org/web/packages/simputation/vignettes/intro.html)
+
+### Installation
 
 ```r
 install.packages("simputation")

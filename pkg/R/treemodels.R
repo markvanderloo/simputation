@@ -8,14 +8,17 @@
 #'    formula.
 #'    
 #' @export
-impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp, ...){
+impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp,
+                        na.action=na.omit, ...){
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=cart_work
-        , formula=remove_groups(formula), add_residual=add_residual, cp , ...)
+        , formula=remove_groups(formula)
+        , add_residual=add_residual
+        , cp , na.action=na.action, ...)
 }
 
-cart_work <- function(dat, formula, add_residual, cp,...){
+cart_work <- function(dat, formula, add_residual, cp, na.action, ...){
 
   predicted <- get_imputed(formula, dat)
   formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
@@ -36,7 +39,7 @@ cart_work <- function(dat, formula, add_residual, cp,...){
   for (i in seq_along(predicted)){
     p <- predicted[i]
     ina <- is.na(dat[,p])
-    m <- run_model(rpart, formula = as.formula(formulas[i]), data=dat, ...)
+    m <- run_model(rpart, formula = as.formula(formulas[i]), data=dat, na.action=na.action,...)
     m <- rpart::prune(m,cp[p])
     if (is.numeric(dat[,p])){
       res <- get_res(nmiss = sum(ina),residuals = residuals(m), type=add_residual)
@@ -52,15 +55,17 @@ cart_work <- function(dat, formula, add_residual, cp,...){
 
 
 #' @rdname impute_
+#' 
 #' @export
-impute_rf <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+impute_rf <- function(dat, formula, add_residual = c("none","observed","normal")
+                      , na.action=na.omit, ...){
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=rf_work
-    , formula=remove_groups(formula), add_residual=add_residual, ...)
+    , formula=remove_groups(formula), add_residual=add_residual, na.action=na.action,...)
 }
 
-rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
+rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), na.action, ...){
   stopifnot(inherits(formula,"formula"))
   
   predictors <- get_predictors(formula, dat)
@@ -71,8 +76,8 @@ rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), 
     p <- predicted[i]
     cc <- complete.cases(dat[c(p,predictors)])
     m <- run_model(randomForest::randomForest
-               , formula=as.formula(formulas[i])
-               , data=dat[cc,,drop=FALSE], ...)
+           , formula=as.formula(formulas[i])
+           , data=dat, na.action=na.action, ...)
     ina <- is.na(dat[,p])
     dat[ina,p] <- predict(m, newdata=dat[ina,,drop=FALSE])
     if (is.numeric(dat[,p]) && add_residual != "none"){
