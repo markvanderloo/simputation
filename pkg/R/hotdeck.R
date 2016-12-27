@@ -42,11 +42,39 @@
 #' If you have this package installed, it can be used by setting
 #' \code{backend="VIM"} for functions supporting this option. Alternatively, one
 #' can set \code{options(simputation.hdbackend="VIM")} so it becomes the
-#' default. Simputation will map the simputation call to a function in the
-#' \pkg{VIM} package. Arguments under \code{...} are passed to the corresponding
-#' \pkg{VIM} function.
+#' default. 
 #' 
-#'
+#' 
+#' Simputation will map the simputation call to a function in the
+#' \pkg{VIM} package. In particular:
+#' 
+#'  \itemize{
+#'  \item{\code{impute_rhd} is mapped to \code{VIM::hotdeck} where imputed
+#'  variables are passed to the \code{variable} argument and the union of
+#'  predictor and grouping variables are passed to \code{domain_var}.
+#'  Extra arguments in \code{...} are passed to \code{VIM::hotdeck} as well.
+#'  Argument \code{pool} is ignored.}
+#'  \item{\code{impute_shd} is mapped to \code{VIM::hotdeck} where
+#'  imputed variables are passed to the \code{variable} argument, predictor
+#'  variables to \code{ord_var} and grouping variables to \code{domain_var}.
+#'  Extra arguments in \code{...} are passed to \code{VIM::hotdeck} as well.
+#'  Arguments \code{pool} and \code{order} are ignored.}
+#'  \item{\code{impute_knn} is mapped to \code{VIM::kNN} where imputed variables
+#'  are passed to \code{variable}, predictor variables are passed to \code{dist_var}
+#'  and grouping variables are ignored with a message. 
+#'  Extra arguments in \code{...} are passed to \code{VIM::hotdeck} as well.
+#'  Argument \code{pool} is ignored.
+#'  Note that simputation  adheres stricktly to the Gower's original
+#'  definition of the distance measure, while \pkg{VIM} uses a generalized variant
+#'  that can take ordered factors into account.
+#'  }
+#' }
+#' By default, \pkg{VIM}'s imputation functions add indicator variables to the
+#' original data to trace what values have been imputed. This is switched off by
+#' default for consistency with the rest of the simputation package, but it may
+#' be turned on again by setting \code{imp_var=TRUE}.
+#' 
+#' 
 #'
 #' @rdname impute_
 #' @param pool Specify donor pool. See under 'Hot deck imputation'.
@@ -402,7 +430,7 @@ impute_knn <- function(dat, formula
     if (length(groups(dat, formula)) > 0){
       message("VIM does not support grouping. Ignoring grouping variables")
     }
-    knn_vim(data=data
+    knn_vim(data=dat
       , variable = get_imputed(formula, dat)
       , dist_var = get_predictors(formula, dat)
       , k=k , ... )
