@@ -1,4 +1,9 @@
 
+novimwarn <- function(){
+"VIM backend requested but not installed. Please install VIM and rerun.
+Returning data without imputing."
+}
+
 # Dummy model returned in case of estimation failure, to keep us going.
 dummymodel <- function() structure(NULL,class="dummymodel")
 predict.dummymodel <- function(object,...) NA

@@ -13,7 +13,7 @@ Version: 0.2.0.0001
 Imports: stats, MASS, rpart, gower, randomForest
 URL: https://github.com/markvanderloo/simputation
 BugReports: https://github.com/markvanderloo/simputation/issues
-Date: 2016-09-09
-Suggests: testthat, knitr, rmarkdown, dplyr
+Date: 2016-12-27
+Suggests: testthat, knitr, rmarkdown, dplyr, VIM
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr

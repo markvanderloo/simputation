@@ -3,9 +3,11 @@
 # RANDOM HOTDECK IMPUTATION
 
 
+#' @param backend Choose the backend for imputation.
+#' 
 #' @section Hot deck imputation:
 #' 
-#' 
+#'  
 #' \itemize{
 #' \item{\code{impute_rhd} The predictor variables in the \code{model} argument are used to split the data 
 #' set into groups prior to imputation (use \code{~ 1} to specify that no grouping is applied).}
@@ -37,8 +39,27 @@
 #' @param prob \code{[numeric]} Sampling probability weights (passed through to
 #'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
 #' @export
-impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariate"), prob, ...){
+impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariate")
+                       , prob, backend=getOption("simputation.hdbackend",default=c("simputation","VIM"))
+                       , ...){
   stopifnot(inherits(formula,"formula"))
+  backend <- match.arg(backend)
+
+  predicted <- get_imputed(formula, dat)
+  grps <- groups(dat,formula)
+  formula <- remove_groups(formula)
+  predictors <- get_predictors(formula, dat, one_ok = TRUE)
+  predictors <- unique(c(predictors, grps))
+
+  if ( backend == "VIM" ){ 
+    return(hd_vim(data=dat
+          , variable=predicted
+          , ord_var=NULL # no ordering in random hotdeck
+          , domain_var=predictors
+          , ...))
+  }
+  
+  
   pool <- match.arg(pool)
   
   rhd <- switch(pool
@@ -47,16 +68,11 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
       , multivariate = multi_rhd)
   
   
-  prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
 
-  predicted <- get_imputed(formula, dat)
-  grps <- groups(dat,formula)
-  formula <- remove_groups(formula)
-  predictors <- get_predictors(formula, dat, one_ok = TRUE)
-  predictors <- unique(c(predictors, grps))
   
   idat <- dat[predicted]
   # ugly construction, but fast.
+  prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
   idat$PROB..TMP <- prob
     
   spl <- if (length(predictors) > 0) dat[predictors] else data.frame(split=rep(1,nrow(dat)))
@@ -122,6 +138,16 @@ multi_rhd <- function(x){
   x
 }
 
+## Map hotdeck methods to VIM backend
+hd_vim <- function(dat, variable, ord_var, domain_var, imp_var=FALSE,...){
+  if(!requireNamespace("VIM")){
+    warning(novimwarn())
+    return(dat)
+  }
+  VIM::hotdeck(data=dat, variable=variable, ord_var=ord_var,domain_var=domain_var,imp_var=imp_var,...)
+}
+
+
 # ------------------------------------------------------------------------------
 # SEQUENTIAL HOTDECK IMPUTATION
 
@@ -130,8 +156,21 @@ multi_rhd <- function(x){
 #' @param order Last Observation Carried Forward or Next Observarion Carried Backward
 #' @export
 impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariate")
-                       , order=c("locf","nocb"),...){
+                       , order=c("locf","nocb")
+                       , backend=getOption("simputation.hdbackend", default=c("simputation","VIM"))
+                       , ...){
   stopifnot(inherits(formula,"formula"))
+  backend <- match.arg(backend)
+  if (backend == "VIM"){
+    return(hd_vim(data=dat
+      , variable = get_imputed(formula)
+      , ord_var = get_predictors(formula)
+      , domain_var = groups(formula)
+      , ...
+    ))
+  }
+  
+  # else: use builtin backend
   pool <- match.arg(pool)
   order <- match.arg(order)
   
