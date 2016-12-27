@@ -139,12 +139,12 @@ multi_rhd <- function(x){
 }
 
 ## Map hotdeck methods to VIM backend
-hd_vim <- function(dat, variable, ord_var, domain_var, imp_var=FALSE,...){
+hd_vim <- function(data, variable, ord_var, domain_var, imp_var=FALSE,...){
   if(!requireNamespace("VIM")){
     warning(novimwarn())
-    return(dat)
+    return(data)
   }
-  VIM::hotdeck(data=dat, variable=variable, ord_var=ord_var,domain_var=domain_var,imp_var=imp_var,...)
+  VIM::hotdeck(data=data, variable=variable, ord_var=ord_var,domain_var=domain_var,imp_var=imp_var,...)
 }
 
 
@@ -163,9 +163,9 @@ impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariat
   backend <- match.arg(backend)
   if (backend == "VIM"){
     return(hd_vim(data=dat
-      , variable = get_imputed(formula)
-      , ord_var = get_predictors(formula)
-      , domain_var = groups(formula)
+      , variable = get_imputed(formula, dat)
+      , ord_var = get_predictors(formula, dat)
+      , domain_var = groups(dat, formula)
       , ...
     ))
   }
