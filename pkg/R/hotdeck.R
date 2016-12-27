@@ -31,6 +31,20 @@
 #'    a single donor.}
 #' } 
 #' 
+#' @section Using the VIM backend:
+#'
+#' The \href{ https://CRAN.R-project.org/package=VIM}{VIM} package has efficient
+#' implementations of several popular imputation methods. In particular, its 
+#' random and sequential hotdeck implementation is faster and more
+#' memory-efficient than that of the current package. Moreover, \pkg{VIM} offers
+#' more fine-grained control over the imputation process then \pkg{simputation}.
+#' 
+#' If you have this package installed, it can be used by setting
+#' \code{backend="VIM"} for functions supporting this option. Alternatively, one
+#' can set \code{options(simputation.hdbackend="VIM")} so it becomes the
+#' default. Simputation will map the simputation call to a function in the
+#' \pkg{VIM} package. Arguments under \code{...} are passed to the corresponding
+#' \pkg{VIM} function.
 #' 
 #'
 #'
@@ -140,8 +154,8 @@ multi_rhd <- function(x){
 
 ## Map hotdeck methods to VIM backend
 hd_vim <- function(data, variable, ord_var, domain_var, imp_var=FALSE,...){
-  if(!requireNamespace("VIM")){
-    warning(novimwarn())
+  if(!requireNamespace("VIM", quietly = TRUE)){
+    warning(novimwarn(), call. = FALSE)
     return(data)
   }
   VIM::hotdeck(data=data, variable=variable, ord_var=ord_var,domain_var=domain_var,imp_var=imp_var,...)
@@ -376,14 +390,39 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
 #' @rdname impute_
 #' @param k Number of nearest neighbours to draw the donor from.
 #' @export
-impute_knn <- function(dat, formula, pool=c("complete","univariate","multivariate"), k=5, ...){
+impute_knn <- function(dat, formula
+  , pool=c("complete","univariate","multivariate")
+  , k=5
+  , backend = getOption("simputation.hdbackend", default=c("simputation","VIM"))
+  , ...){
   stopifnot(inherits(formula,"formula"))
+  backend <- match.arg(backend)
+  
+  if (backend == "VIM"){
+    if (length(groups(dat, formula)) > 0){
+      message("VIM does not support grouping. Ignoring grouping variables")
+    }
+    knn_vim(data=data
+      , variable = get_imputed(formula, dat)
+      , dist_var = get_predictors(formula, dat)
+      , k=k , ... )
+  }
+  
   pool <- match.arg(pool)
   
   do_by(dat, groups(dat,formula), .fun=knn_work
     , formula=remove_groups(formula), pool=pool, k=k, ...)
 }
 
+## knn imputation with VIM backend.
+knn_vim <- function(data, variable, dist_var, imp_var=FALSE, k=5,...){
+  if (!requireNamespace("VIM",quietly = TRUE)){
+    warning(novimwarn(), call. = FALSE)
+    return(data)
+  } 
+  VIM::kNN(data=data, variable=variable, dist_var=dist_var
+           , imp_var=imp_var, k=k,...)
+}
 
 knn_work <- function(dat, formula, pool=c("complete","univariate","multivariate"), k, ...){
   
