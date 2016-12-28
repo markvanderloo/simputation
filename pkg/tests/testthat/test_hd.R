@@ -151,7 +151,41 @@ test_that("grouped imputation",{
   
 })
 
-
+context("hotdeck imputation with VIM-backend")
+if (suppressPackageStartupMessages(require("VIM", quietly=TRUE))){
+  test_that("random hotdeck with VIM backend",{
+    dat <- data.frame(
+      foo = c(2,NA,4)
+      , bar = c(NA,NA,8)
+    )
+    expect_false(anyNA(impute_rhd(dat, foo ~ 1, backend="VIM")["foo"]) )
+    expect_false(anyNA(impute_rhd(dat, . ~ 1, backend="VIM")) )
+  })
+  
+  test_that("sequential hotdeck with VIM backend",{
+    dat <- data.frame(
+      id = 0:3
+      ,foo = c(1,2,NA,4)
+      , bar = c(2,NA,NA,8)
+    )
+    expect_equal(
+      impute_shd(dat, .~id, backend="VIM")
+      , impute_shd(dat, .~ id, pool="univariate")
+    )
+  })
+  
+  test_that("knn hotdeck with VIM backend",{
+    dat <- data.frame(x = c(NA,2,4,5), y = c(6,7,NA,10))
+    options(gd_num_thread = 1L)
+    
+    expect_equal(
+      impute_knn(dat, . ~ ., k=1)
+      , impute_knn(dat, .~.,k=1, backend="VIM") 
+    )
+    
+  })
+  
+}
 
 
 

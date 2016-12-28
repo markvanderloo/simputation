@@ -58,7 +58,10 @@
 #'  imputed variables are passed to the \code{variable} argument, predictor
 #'  variables to \code{ord_var} and grouping variables to \code{domain_var}.
 #'  Extra arguments in \code{...} are passed to \code{VIM::hotdeck} as well.
-#'  Arguments \code{pool} and \code{order} are ignored.}
+#'  Arguments \code{pool} and \code{order} are ignored. In \code{VIM} the donor pool
+#'  is determined on a per-variable basis, equivalent to setting \code{pool="univariate"}
+#'  with the simputation backend. \pkg{VIM} is LOCF-based. Differences between
+#'  \pkg{simputation} and \code{VIM} likely occurr when the sorting variables contain missings.}
 #'  \item{\code{impute_knn} is mapped to \code{VIM::kNN} where imputed variables
 #'  are passed to \code{variable}, predictor variables are passed to \code{dist_var}
 #'  and grouping variables are ignored with a message. 
@@ -75,6 +78,8 @@
 #' be turned on again by setting \code{imp_var=TRUE}.
 #' 
 #' 
+#' 
+#' 
 #'
 #' @rdname impute_
 #' @param pool Specify donor pool. See under 'Hot deck imputation'.
@@ -85,7 +90,7 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
                        , prob, backend=getOption("simputation.hdbackend",default=c("simputation","VIM"))
                        , ...){
   stopifnot(inherits(formula,"formula"))
-  backend <- match.arg(backend)
+  backend <- match.arg(backend, choices = c("simputation","VIM"))
 
   predicted <- get_imputed(formula, dat)
   grps <- groups(dat,formula)
@@ -186,6 +191,7 @@ hd_vim <- function(data, variable, ord_var, domain_var, imp_var=FALSE,...){
     warning(novimwarn(), call. = FALSE)
     return(data)
   }
+  if (length(domain_var) == 0) domain_var <- NULL
   VIM::hotdeck(data=data, variable=variable, ord_var=ord_var,domain_var=domain_var,imp_var=imp_var,...)
 }
 
@@ -202,14 +208,19 @@ impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariat
                        , backend=getOption("simputation.hdbackend", default=c("simputation","VIM"))
                        , ...){
   stopifnot(inherits(formula,"formula"))
-  backend <- match.arg(backend)
+  backend <- match.arg(backend,choices=c("simputation","VIM"))
   if (backend == "VIM"){
-    return(hd_vim(data=dat
+    predictors <- get_predictors(formula,dat,one_ok = TRUE)
+    if (length(predictors)==0) predictors <- ".vim.doemmy.sortvar"
+    dat$.vim.doemmy.sortvar <- seq_len(nrow(dat))
+    out <- hd_vim(data=dat
       , variable = get_imputed(formula, dat)
-      , ord_var = get_predictors(formula, dat)
+      , ord_var = predictors
       , domain_var = groups(dat, formula)
       , ...
-    ))
+    )
+    out$.vim.doemmy.sortvar <- NULL
+    return(out)
   }
   
   # else: use builtin backend
@@ -225,7 +236,6 @@ shd_work <- function(dat, formula, pool=c("complete","univariate","multivariate"
   stopifnot(inherits(formula,"formula"))
   predicted <- get_imputed(formula, dat)
   predictors <- get_predictors(formula, dat, one_ok=TRUE)
-  
   
   ord <- if( length(predictors) > 0) order(dat[predictors],decreasing=FALSE) else seq_len(nrow(dat)) 
   if (order=="locf") ord <- rev(ord)
@@ -424,7 +434,7 @@ impute_knn <- function(dat, formula
   , backend = getOption("simputation.hdbackend", default=c("simputation","VIM"))
   , ...){
   stopifnot(inherits(formula,"formula"))
-  backend <- match.arg(backend)
+  backend <- match.arg(backend,choices=c("simputation","VIM"))
   
   if (backend == "VIM"){
     if (length(groups(dat, formula)) > 0){
