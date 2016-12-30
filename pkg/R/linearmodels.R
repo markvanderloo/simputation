@@ -73,20 +73,13 @@
 #'   \item{\code{rpart::\link[rpart]{na.rpart}}: omit cases where the predicted is
 #'   missing but keep cases where one or more predictors are missing. Relevant
 #'   for \code{impute_cart}}
-#' \item{\code{randomForest::\link[randomForest]{na.roughfix}} Temporarily impute all
+#' \item{\code{\link[randomForest]{na.roughfix}} Temporarily impute all
 #'   predictors and predicted with the column median (for numeric data) or the
-#'   mode (for categorical data) in order to fit the model. }
+#'   mode (for categorical data) in order to fit the model. (re-exported from 
+#'   \pkg{randomForest}) }
 #' }
 #' 
 #' 
-#' 
-#' 
-#'
-#'
-#'  
-#'  
-#'  
-#'    
 #' 
 #' @section Model descriptions:
 #' 
