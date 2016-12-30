@@ -192,7 +192,15 @@ hd_vim <- function(data, variable, ord_var, domain_var, imp_var=FALSE,...){
     return(data)
   }
   if (length(domain_var) == 0) domain_var <- NULL
-  VIM::hotdeck(data=data, variable=variable, ord_var=ord_var,domain_var=domain_var,imp_var=imp_var,...)
+  tryCatch(
+    VIM::hotdeck(data=data, variable=variable
+      , ord_var=ord_var,domain_var=domain_var
+      ,imp_var=imp_var,...)
+    , error = function(e){
+      warnf("VIM::hotdeck stopped with message\n %s\n Returning original data."
+            , e$message)
+      data
+    })
 }
 
 
@@ -458,8 +466,15 @@ knn_vim <- function(data, variable, dist_var, imp_var=FALSE, k=5,...){
     warning(novimwarn(), call. = FALSE)
     return(data)
   } 
-  VIM::kNN(data=data, variable=variable, dist_var=dist_var
-           , imp_var=imp_var, k=k,...)
+  tryCatch(
+    VIM::kNN(data=data, variable=variable, dist_var=dist_var
+     , imp_var=imp_var, k=k,...)
+    , error = function(e){
+      warnf("VIM::kNN stopped with message\n %s\n Returning original data."
+            , e$message)
+      data
+    })
+  
 }
 
 knn_work <- function(dat, formula, pool=c("complete","univariate","multivariate"), k, ...){

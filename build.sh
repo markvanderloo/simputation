@@ -1,7 +1,7 @@
 #!/bin/bash
 
 R=R
-INCREASE_BUILDNUM=1
+INCREASE_BUILDNUM=0
 CHECKARG=""
 while [ $# -gt 0 ] ; do
   case "$1" in 
@@ -9,7 +9,7 @@ while [ $# -gt 0 ] ; do
        R=Rdev
        shift 1 ;;
     -increase-buildnum)
-      INCREASE_BUILDNUM=0
+      INCREASE_BUILDNUM=1
       shift 1 ;;
     *)
        CHECKARG="$CHECKARG $1"
