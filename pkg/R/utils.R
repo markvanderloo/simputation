@@ -5,7 +5,7 @@ Returning data without imputing."
 }
 
 # Dummy model returned in case of estimation failure, to keep us going.
-dummymodel <- function() structure(NULL,class="dummymodel")
+dummymodel <- function() structure(NA,class="dummymodel")
 predict.dummymodel <- function(object,...) NA
 residuals.dummymodel <- function(object,...) NA
 
@@ -15,8 +15,7 @@ run_model <- function(fun, ...){
     p <- all.vars(list(...)[[1]])[[1]]
     # get model name.
     a <- deparse(sys.call(-4L)[[2]])
-    warning(sprintf("Could not execute %s for '%s': %s",a,p, e$message)
-            , call.=FALSE)
+    warnf("Could not execute %s for '%s': %s",a,p, e$message)
     dummymodel()
   })
 }
@@ -101,7 +100,7 @@ get_imputed <- function(frm, dat){
 
 
 
-# Chec expression against the following EBNF
+# Check expression against the following EBNF
 #
 # NAME      = <A valid R symbol name>
 # UNARYMIN  = "-"
