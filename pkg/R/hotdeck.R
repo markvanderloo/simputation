@@ -347,6 +347,7 @@ impute_pmm <- function(dat, formula, predictor=impute_lm
   
   # generate predictions by imputing with the 'predictor' function.
   do_by(dat, groups(dat,formula), .fun=pmm_work
+    , predictor = predictor
     , formula=remove_groups(formula), pool=pool, ...)
 }
 

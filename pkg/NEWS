@@ -1,3 +1,6 @@
+version 0.2.1
+- bugfix in 'impute_pmm': argument 'predictor' was ignored.
+
 version 0.2.0
 - Added na.action option for model-based imputation (thanks to Soogeun Park)
 - impute_rhd, impute_shd, and impute_knn now have option 'backend="VIM"'
