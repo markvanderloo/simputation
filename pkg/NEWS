@@ -4,6 +4,7 @@ version 0.2.1
 version 0.2.0
 - Added na.action option for model-based imputation (thanks to Soogeun Park)
 - impute_rhd, impute_shd, and impute_knn now have option 'backend="VIM"'
+- removed call to structure(NULL,*) to comply to changes in R-devel (thanks to Martin Maechler)
 
 version 0.1.0
 - initial release
