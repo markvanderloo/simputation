@@ -10,7 +10,8 @@ An R package to make imputation simple. Currently supported methods include
 
 - Model based (optionally add [non-]parametric random residual)
     - linear regression 
-    - robust linear regression
+    - robust linear regression (M-estimation)
+    - elasticnet/lasso (version >= 0.2.1)
     - CART models
     - Random forest
 - Donor imputation (including various donor pool specifications)
