@@ -1,4 +1,5 @@
 version 0.2.1
+- added support for elasticnet / lasso regression (using 'glmnet')
 - bugfix in 'impute_pmm': argument 'predictor' was ignored.
 
 version 0.2.0
