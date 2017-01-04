@@ -152,20 +152,24 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 #' \code{family="gaussian"} the imputed variables are general numeric variables.
 #' For \code{family="poisson"} the imputed variables are nonnegative counts.
 #' See \code{\link[glmnet]{glmnet}} for details.
-#' @param lambda The value of \eqn{\lambda} to use when computing predictions for 
-#'  lasso/elasticnet regression (parameter \var{s} of \code{\link[glmnet]{predict.glmnet}}).
+#' @param s The value of \eqn{\lambda} to use when computing predictions for 
+#'   lasso/elasticnet regression (parameter \var{s} of 
+#'   \code{\link[glmnet]{predict.glmnet}}). For \code{impute\_en} the (optional)
+#'   parameter \var{lambda} is passed to \code{\link{glmnet}} when estimating
+#'   the model (which is advised against).
+#'   
 #' 
 #' @export
 impute_en <- function(dat, formula
       , add_residual = c("none","observed","normal")
-      , na.action=na.omit, family=c("gaussian","poisson"), lambda = 0.01, ...){
+      , na.action=na.omit, family=c("gaussian","poisson"), s = 0.01, ...){
   
   family <- match.arg(family)
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=lmwork
         , formula=remove_groups(formula)
         , add_residual=add_residual, fun=fdglmnet
-        , na.action=na.action, family=family, lambda=lambda, ...)
+        , na.action=na.action, family=family, s=s, ...)
   
 }
 
@@ -183,7 +187,7 @@ predict.simputation.glmnet <- function(object, newdat, ...){
   
   responsetype <- c(gaussian="link",poisson = "response")
   type <- responsetype[object$family]
-  y[cc] <- glmnet::predict.glmnet(object, newx=newx, type=type, s=object$lambda, ...)
+  y[cc] <- glmnet::predict.glmnet(object, newx=newx, type=type, s=object$s, ...)
   y
 }
 
@@ -191,20 +195,33 @@ residuals.simputation.glmnet <- function(object,...){
   object$residuals
 }
 
-# interface to the elastic net regression of glmnet.
+has_intercept <- function(frm){
+  attr(terms(frm),"intercept") == 1
+}
 
 # formula-data interface to glmnet::glmnet, single numerical predicted variable
-fdglmnet <- function(formula, data, na.action=na.omit, family, lambda, ...)
+fdglmnet <- function(formula, data, na.action=na.omit, family, s, ...)
 {
   dat <- na.action(data)
+  
+  intercept <- FALSE
+  if (has_intercept(formula)){
+    formula <- update.formula(formula, . ~ . -1)
+    intercept <- TRUE
+  }
+  
   x <- stats::model.matrix(formula, data=dat)
+  if (dim(x)[2] <= 1){
+    warnf("glmnet expects at least two predictors. Returning original data")
+    return(data)
+  }
   y <- eval(formula[[2]],envir = dat)
-  m <- glmnet::glmnet(x=x,y=y,...)
+  m <- glmnet::glmnet(x=x,y=y,intercept=intercept,family=family,...)
   # store extra info for the predictor.
   m$formula <- formula
   m$family <- family
-  m$lambda <- lambda
-  m$residuals <- y - glmnet::predict.glmnet(m, newx=x, s=lambda)
+  m$s <- s
+  m$residuals <- y - glmnet::predict.glmnet(m, newx=x, s=s)
   class(m) <- c("simputation.glmnet",class(m))
   m
 }
