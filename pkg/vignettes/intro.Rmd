@@ -24,6 +24,7 @@ methodology is supported.
 - Model based (optionally add [non-]parametric random residual)
     - linear regression 
     - robust linear regression
+    - ridge/elasticnet/lasso regression
     - CART models (decision trees)
     - Random forest
 - Donor imputation (including various donor pool specifications)
@@ -36,6 +37,41 @@ methodology is supported.
     - Proxy imputation (copy from other variable) 
 
 
+### Installation
+
+The basic version of the package can be installed with 
+```{r,eval=FALSE}
+install.packages('simputation')
+```
+
+The package uses several other packages for model building. To keep the package 
+lightweight, many of these are not installed immediately when you install
+simputation. To install all dependencies do
+```{r,eval=FALSE}
+install.packages('simputation', dependencies=TRUE)
+```
+Alternatively, one can manually install extra dependencies. Below is 
+an overview of what packages are used.
+
+```{r,echo=FALSE}
+knitr::kable(
+  data.frame(
+      `function` = c("impute_rlm"    ,"impute_en"              , "impute_cart", "impute_rf", "impute_rhd","impute_shd","impute_knn")
+    , model = c("M-estimation", "ridge/elasticnet/lasso", "CART"       , "random forest","random hot deck","sequential hot deck","k nearest neighbours")
+    , package = c("MASS"      ,"glmnet"                 , "rpart"      , "randomForest","VIM (optional)","VIM (optional)","VIM (optional)")
+    , R.recommended = c("yes","no","yes","no","no","no","no")
+    ,stringsAsFactors=FALSE
+  )
+)
+```
+
+Packages available in the R recommended suite are installed by default when R
+is installed (unless this was explicitly prevented at installation). The `VIM`
+package can be used as an optional backend for hot deck imputation procedures.
+
+
+
+### General remarks
 
 A call to an imputation function has the following structure.
 
@@ -52,7 +88,6 @@ The structure of a formula object is as follows:
 IMPUTED ~ MODEL_SPECIFICATION [ | GROUPING ]
 ```
 where the part between `[]` is optional.
-
 
 In the following, we assume that the reader already has some familiarity with
 the use of formulas in R (e.g. when specifying linear models) and statistical
