@@ -50,7 +50,8 @@ test_that("stuff gets imputed",{
   funs <- list(impute_lm = impute_lm
                , impute_rlm = impute_rlm
                , impute_cart = impute_cart
-               , impute_proxy = impute_proxy)
+               , impute_proxy = impute_proxy
+               , impute_en)
   for ( i in seq_along(funs) ){
     fn <- funs[[i]]
     nm <- names(funs)[i]

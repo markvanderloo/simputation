@@ -20,6 +20,7 @@
 #' \itemize{
 #' \item{\code{\link[stats]{lm}} for \code{impute_lm}}
 #' \item{\code{\link[MASS]{rlm}} for \code{impute_rlm}}
+#' \item{\code{\link[glmnet]{glmnet}} for \code{impute_en}}
 #' \item{\code{\link[base]{order}} for \code{impute_shd}} 
 #' \item{The \code{predictor} for \code{impute_pmm}}
 #' \item{\code{\link[randomForest]{randomForest}} for \code{impute_rf}}
@@ -82,11 +83,15 @@
 #' 
 #' 
 #' @section Model descriptions:
+#' If external packages are used to generate the model predictions, these are
+#' given in brackets (with links). The \code{...} arguments are passed to
+#' those functions when training the imputation model.
 #' 
 #' \tabular{ll}{
 #' \bold{Model} \tab \bold{description}\cr
-#' \code{impute_lm} \tab Use \code{stats::lm} to train the imputation model.\cr
-#' \code{impute_rlm} \tab Use \code{MASS::rlm} to train the imputation model.\cr
+#' \code{impute_lm} \tab Standard linear model (\code{\link[stats:lm]{stats::lm}})\cr
+#' \code{impute_rlm} \tab Robust linear model based on \eqn{M}-estimation. (\code{\link[MASS:rlm]{MASS::rlm}}).\cr
+#' \code{impute_en} \tab Elasticnet or lasso regression (\code{\link[glmnet:glmnet]{glmnet::glmnet}}).\cr
 #' \code{impute_median} \tab Median imputation. Predictors are treated
 #'    as grouping variables for computing medians.\cr
 #' \code{impute_const} \tab Impute a constant value \cr
@@ -95,13 +100,13 @@
 #' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data (use \code{~ 1} for no sorting).\cr
 #' \code{impute_knn} \tab k-nearest neighbour imputation. Predictors are used to determine Gower's distance.\cr
 #' \code{impute_pmm} \tab Predictive mean matching. \cr
-#' \code{impute_cart} \tab Use \code{rpart::rpart} to train a CART model.\cr
-#' \code{impute_rf} \tab Use \code{randomForest::randomForest} to train the predictive model.
+#' \code{impute_cart} \tab Classification and regression tree (\code{\link[rpart:rpart]{rpart::rpart}}).\cr
+#' \code{impute_rf} \tab Random forest (\code{\link[randomForest:randomForest]{randomForest::randomForest}}).
 #' }
 #'
 #' @seealso 
 #' \href{../doc/intro.html}{Getting started with simputation}, 
-#' \code{\link[stats]{lm}} \code{\link[MASS]{rlm}} \code{\link[rpart]{rpart}}
+#' 
 #' 
 #'
 #' @return \code{dat}, but imputed where possible.
@@ -138,6 +143,74 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
   do_by(dat, groups(dat,formula), .fun=lmwork
     , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm, na.action=na.action, ...)
 }
+
+
+
+#' @rdname impute_
+#' 
+#' @param family Response type for elasticnet / lasso regression. For 
+#' \code{family="gaussian"} the imputed variables are general numeric variables.
+#' For \code{family="poisson"} the imputed variables are nonnegative counts.
+#' See \code{\link[glmnet]{glmnet}} for details.
+#' @param s The value of \eqn{\lambda} to use when computing predictions for 
+#'     lasso/elasticnet regression (see also \code{\link[glmnet]{predict.glmnet}}).
+#' 
+#' @export
+impute_en <- function(dat, formula
+      , add_residual = c("none","observed","normal")
+      , na.action=na.omit, family=c("gaussian","poisson"), s = 0.01, ...){
+  
+  family <- match.arg(family)
+  add_residual <- match.arg(add_residual)
+  do_by(dat, groups(dat,formula), .fun=lmwork
+        , formula=remove_groups(formula)
+        , add_residual=add_residual, fun=fdglmnet
+        , na.action=na.action, family=family, s=s, ...)
+  
+}
+
+
+predict.simputation.glmnet <- function(object, newdat, ...){
+  tm <- terms(object$formula)
+  
+  # only complete cases in predictors can be used to compute imputations.
+  vars <- attr(tm,"term.labels")
+  cc <- complete.cases(newdat[vars])
+  y <- rep(NA_real_, nrow(newdat))
+  if (!any(cc)) return(y)
+  
+  newx <- model.matrix(stats::delete.response(tm),newdat)
+  
+  responsetype <- c(gaussian="link",poisson = "response")
+  type <- responsetype[object$family]
+  y[cc] <- glmnet::predict.glmnet(object, newx=newx, type=type, s=object$s, ...)
+  y
+}
+
+residuals.simputation.glmnet <- function(object,...){
+  object$residuals
+}
+
+# interface to the elastic net regression of glmnet.
+
+# formula-data interface to glmnet::glmnet, single numerical predicted variable
+fdglmnet <- function(formula, data, na.action=na.omit, family, s, ...)
+{
+  dat <- na.action(data)
+  x <- stats::model.matrix(formula, data=dat)
+  y <- eval(formula[[2]],envir = dat)
+  m <- glmnet::glmnet(x=x,y=y,...)
+  # store extra info for the predictor.
+  m$formula <- formula
+  m$family <- family
+  m$s <- s
+  m$residuals <- y - glmnet::predict.glmnet(m, newx=x, s=s)
+  class(m) <- c("simputation.glmnet",class(m))
+  m
+}
+
+
+
 
 lmwork <- function(dat, formula, add_residual, fun, na.action, ...){
   stopifnot(inherits(formula,"formula"))

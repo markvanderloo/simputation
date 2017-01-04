@@ -1,7 +1,7 @@
 
-novimwarn <- function(){
-"VIM backend requested but not installed. Please install VIM and rerun.
-Returning data without imputing."
+nopkgwarn <- function(pkg){
+  sprintf("The package %s is needed for this function. Returning original data."
+        , pkg)
 }
 
 # Dummy model returned in case of estimation failure, to keep us going.

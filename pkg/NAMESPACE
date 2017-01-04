@@ -2,6 +2,7 @@
 
 export(impute_cart)
 export(impute_const)
+export(impute_en)
 export(impute_knn)
 export(impute_lm)
 export(impute_median)
