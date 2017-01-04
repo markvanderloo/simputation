@@ -59,6 +59,7 @@ cart_work <- function(dat, formula, add_residual, cp, na.action, ...){
 #' @export
 impute_rf <- function(dat, formula, add_residual = c("none","observed","normal")
                       , na.action=na.omit, ...){
+  if (not_installed("randomForest")) return(dat)
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=rf_work

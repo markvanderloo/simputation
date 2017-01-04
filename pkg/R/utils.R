@@ -1,8 +1,10 @@
 
-nopkgwarn <- function(pkg){
-  sprintf("The package %s is needed for this function. Returning original data."
-        , pkg)
+not_installed <- function(pkg, action="Returning original data"){
+  if(requireNamespace(pkg,quietly=TRUE)) return(FALSE)
+  warnf("Package %s is needed but not found. %s", pkg, action)
+  TRUE
 }
+
 
 # Dummy model returned in case of estimation failure, to keep us going.
 dummymodel <- function() structure(NA,class="dummymodel")

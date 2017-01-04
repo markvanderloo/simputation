@@ -187,10 +187,7 @@ multi_rhd <- function(x){
 
 ## Map hotdeck methods to VIM backend
 hd_vim <- function(data, variable, ord_var, domain_var, imp_var=FALSE,...){
-  if(!requireNamespace("VIM", quietly = TRUE)){
-    warning(nopkgwarn("VIM"), call. = FALSE)
-    return(data)
-  }
+  if(not_installed("VIM")) return(data)
   if (length(domain_var) == 0) domain_var <- NULL
   tryCatch(
     VIM::hotdeck(data=data, variable=variable
@@ -463,10 +460,7 @@ impute_knn <- function(dat, formula
 
 ## knn imputation with VIM backend.
 knn_vim <- function(data, variable, dist_var, imp_var=FALSE, k=5,...){
-  if (!requireNamespace("VIM",quietly = TRUE)){
-    warning(nopkgwarn("VIM"), call. = FALSE)
-    return(data)
-  } 
+  if (not_installed("VIM")) return(data)
   tryCatch(
     VIM::kNN(data=data, variable=variable, dist_var=dist_var
      , imp_var=imp_var, k=k,...)

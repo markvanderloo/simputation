@@ -151,11 +151,11 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 #' @param family Response type for elasticnet / lasso regression. For 
 #' \code{family="gaussian"} the imputed variables are general numeric variables.
 #' For \code{family="poisson"} the imputed variables are nonnegative counts.
-#' See \code{\link[glmnet]{glmnet}} for details.
+#' See \code{\link[glmnet:glmnet]{glmnet}} for details.
 #' @param s The value of \eqn{\lambda} to use when computing predictions for 
 #'   lasso/elasticnet regression (parameter \var{s} of 
-#'   \code{\link[glmnet]{predict.glmnet}}). For \code{impute\_en} the (optional)
-#'   parameter \var{lambda} is passed to \code{\link{glmnet}} when estimating
+#'   \code{\link[glmnet:predict.glmnet]{predict.glmnet}}). For \code{impute\_en} the (optional)
+#'   parameter \var{lambda} is passed to \code{\link[glmnet]{glmnet}} when estimating
 #'   the model (which is advised against).
 #'   
 #' 
@@ -163,7 +163,9 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 impute_en <- function(dat, formula
       , add_residual = c("none","observed","normal")
       , na.action=na.omit, family=c("gaussian","poisson"), s = 0.01, ...){
-  
+
+  if (not_installed("glmnet")) return(dat)
+    
   family <- match.arg(family)
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=lmwork
