@@ -9,7 +9,7 @@
 #'    
 #' @export
 impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp,
-                        na.action=na.omit, ...){
+                        na.action=na.rpart, ...){
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=cart_work

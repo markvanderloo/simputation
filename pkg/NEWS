@@ -2,6 +2,7 @@ version 0.2.1
 - added support for elasticnet / lasso regression (using 'glmnet')
 - bugfix in 'impute_pmm': argument 'predictor' was ignored.
 - dependencies on larger packages (randomForest, glmnet) moved to 'suggests'.
+- default 'na.action' for 'impute_cart' is now 'na.rpart'.
 
 version 0.2.0
 - Added na.action option for model-based imputation (thanks to Soogeun Park)
