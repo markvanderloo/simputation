@@ -134,7 +134,6 @@ get_predictors <- function(frm, dat, one_ok = FALSE){
   } else {
     stop(sprintf("Invalid specification of predictors %s:",deparse(frm[[3]])), call.=FALSE)    
   }
-  # get rid of variables on lhs so predictors using "." get listed correctly.
 
 }
 

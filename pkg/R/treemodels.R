@@ -71,13 +71,18 @@ rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), 
   
   predictors <- get_predictors(formula, dat)
   predicted <- get_imputed(formula, dat)
-  formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
+  # we need to work around a formula-handling bug in 'randomForest <= 4.6-12' 
+  # (the ". - x" case is not handled correctly)
+  # The following should work when randomForest gets updated.
+  # formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
   
   for ( i in seq_along(predicted) ){
     p <- predicted[i]
     cc <- complete.cases(dat[c(p,predictors)])
+    ipredictors <- setdiff(predictors, predicted[i])
+    frm <- paste(predicted[i], " ~ ",paste(ipredictors,collapse=" + ") )
     m <- run_model(randomForest::randomForest
-           , formula=as.formula(formulas[i])
+           , formula=as.formula(frm)
            , data=dat, na.action=na.action, ...)
     ina <- is.na(dat[,p])
     dat[ina,p] <- predict(m, newdata=dat[ina,,drop=FALSE])
