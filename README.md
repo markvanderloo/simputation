@@ -2,8 +2,8 @@
 [![Build Status](https://travis-ci.org/markvanderloo/simputation.svg?branch=master)](https://travis-ci.org/markvanderloo/simputation)
 [![Coverage Status](https://coveralls.io/repos/github/markvanderloo/simputation/badge.svg?branch=master)](https://coveralls.io/github/markvanderloo/simputation?branch=master)
 [![drat version](https://img.shields.io/badge/drat-0.2.1-green.svg)]()
-[![CRAN](http://www.r-pkg.org/badges/version/simputation)](http://cran.r-project.org/web/package=simputation)
-[![Downloads](http://cranlogs.r-pkg.org/badges/simputation)](http://cran.r-project.org/package=simputation)
+[![CRAN](http://www.r-pkg.org/badges/version/simputation)](https://CRAN.R-project.org/package=simputation)
+[![Downloads](http://cranlogs.r-pkg.org/badges/simputation)](https://CRAN.R-project.org/package=simputation)
 
 # simputation
 An R package to make imputation simple. Currently supported methods include
