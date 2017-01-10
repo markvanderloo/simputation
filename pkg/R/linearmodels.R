@@ -24,6 +24,7 @@
 #' \item{\code{\link[base]{order}} for \code{impute_shd}} 
 #' \item{The \code{predictor} for \code{impute_pmm}}
 #' \item{\code{\link[randomForest]{randomForest}} for \code{impute_rf}}
+#' \item{\code{\link[missForest]{missForest}} for \code{impute_mf}}
 #' }
 #' 
 #' @section Specifying the imputation model:
@@ -101,7 +102,8 @@
 #' \code{impute_knn} \tab k-nearest neighbour imputation. Predictors are used to determine Gower's distance.\cr
 #' \code{impute_pmm} \tab Predictive mean matching. \cr
 #' \code{impute_cart} \tab Classification and regression tree (\code{\link[rpart:rpart]{rpart::rpart}}).\cr
-#' \code{impute_rf} \tab Random forest (\code{\link[randomForest:randomForest]{randomForest::randomForest}}).
+#' \code{impute_rf} \tab Random forest (\code{\link[randomForest:randomForest]{randomForest::randomForest}}).\cr
+#' \code{impute_mf} \tab missForest (\code{\link[missForest:missForest]{missForest::missForest}}).
 #' }
 #'
 #' @seealso 
