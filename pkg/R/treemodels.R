@@ -9,16 +9,16 @@
 #'    
 #' @export
 impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp,
-                        na.action=na.rpart, ...){
+                        na_action=na.rpart, ...){
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=cart_work
         , formula=remove_groups(formula)
         , add_residual=add_residual
-        , cp , na.action=na.action, ...)
+        , cp , na_action=na_action, ...)
 }
 
-cart_work <- function(dat, formula, add_residual, cp, na.action, ...){
+cart_work <- function(dat, formula, add_residual, cp, na_action, ...){
 
   predicted <- get_imputed(formula, dat)
   formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
@@ -39,7 +39,7 @@ cart_work <- function(dat, formula, add_residual, cp, na.action, ...){
   for (i in seq_along(predicted)){
     p <- predicted[i]
     ina <- is.na(dat[,p])
-    m <- run_model(rpart, formula = as.formula(formulas[i]), data=dat, na.action=na.action,...)
+    m <- run_model(rpart, formula = as.formula(formulas[i]), data=dat, na.action=na_action,...)
     m <- rpart::prune(m,cp[p])
     if (is.numeric(dat[,p])){
       res <- get_res(nmiss = sum(ina),residuals = residuals(m), type=add_residual)
@@ -58,15 +58,16 @@ cart_work <- function(dat, formula, add_residual, cp, na.action, ...){
 #' 
 #' @export
 impute_rf <- function(dat, formula, add_residual = c("none","observed","normal")
-                      , na.action=na.omit, ...){
+                      , na_action=na.omit
+                      , ...){
   if (not_installed("randomForest")) return(dat)
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=rf_work
-    , formula=remove_groups(formula), add_residual=add_residual, na.action=na.action,...)
+    , formula=remove_groups(formula), add_residual=add_residual, na_action=na_action,...)
 }
 
-rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), na.action, ...){
+rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), na_action, ...){
   stopifnot(inherits(formula,"formula"))
   
   predictors <- get_predictors(formula, dat)
@@ -83,7 +84,7 @@ rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), 
     frm <- paste(predicted[i], " ~ ",paste(ipredictors,collapse=" + ") )
     m <- run_model(randomForest::randomForest
            , formula=as.formula(frm)
-           , data=dat, na.action=na.action, ...)
+           , data=dat, na.action=na_action, ...)
     ina <- is.na(dat[,p])
     dat[ina,p] <- predict(m, newdata=dat[ina,,drop=FALSE])
     if (is.numeric(dat[,p]) && add_residual != "none"){

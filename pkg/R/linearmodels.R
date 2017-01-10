@@ -13,7 +13,7 @@
 #'   (with replacement) from the model's residuals. Ignored for non-numeric 
 #'   predicted variables.
 #'  
-#' @param na.action \code{[function]} what to do with missings in training data.
+#' @param na_action \code{[function]} what to do with missings in training data.
 #'   By default cases with missing values in predicted or predictors are omitted
 #'   (see `Missings in training data').
 #' @param ... further arguments passed to 
@@ -63,7 +63,7 @@
 #' @section Missings in training data:
 #' 
 #' For model-based imputation, including those based on (robust) linear models, 
-#' cart models and random forests, there is an option called \code{na.action}
+#' cart models and random forests, there is an option called \code{na_action}
 #' that specifies what to do with missings in training data. The default action
 #' is to train models on data where both the predicted and predictor variables
 #' are available. Some of the interesting options are
@@ -129,19 +129,21 @@
 #' @rdname impute_ 
 #' @export
 impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
-                      ,na.action=na.omit, ...){
+                      ,na_action=na.omit, ...){
     add_residual <- match.arg(add_residual)
     do_by(dat, groups(dat,formula), .fun=lmwork
-          , formula=remove_groups(formula), add_residual=add_residual, fun=lm, na.action=na.action, ...)
+          , formula=remove_groups(formula), add_residual=add_residual, fun=lm
+          , na.action=na_action, ...)
 }
 
 
 #' @rdname impute_
 #' @export
-impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), na.action=na.omit,...){
+impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), na_action=na.omit,...){
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=lmwork
-    , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm, na.action=na.action, ...)
+    , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm
+    , na.action=na_action, ...)
 }
 
 
@@ -162,7 +164,7 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 #' @export
 impute_en <- function(dat, formula
       , add_residual = c("none","observed","normal")
-      , na.action=na.omit, family=c("gaussian","poisson"), s = 0.01, ...){
+      , na_action=na.omit, family=c("gaussian","poisson"), s = 0.01, ...){
 
   if (not_installed("glmnet")) return(dat)
     
@@ -171,7 +173,7 @@ impute_en <- function(dat, formula
   do_by(dat, groups(dat,formula), .fun=lmwork
         , formula=remove_groups(formula)
         , add_residual=add_residual, fun=fdglmnet
-        , na.action=na.action, family=family, s=s, ...)
+        , na.action=na_action, family=family, s=s, ...)
   
 }
 

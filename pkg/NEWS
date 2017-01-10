@@ -1,10 +1,11 @@
 version 0.2.1
 - added support for elasticnet / lasso regression (using 'glmnet')
-- default 'na.action' for 'impute_cart' is now 'na.rpart'.
+- renamed 'na.action' -> 'na_action' for consistency within simputation.
+- default 'na_action' for 'impute_cart' is now 'na.rpart'.
 - dependencies on larger packages (randomForest, glmnet) moved to 'suggests'.
-- bugfix in 'impute_pmm': argument 'predictor' was ignored.
-- bugfix in 'impute_rf': needed workaround for bug in randomForest 4.6.12 
+- Fix in 'impute_rf': needed workaround for bug in randomForest 4.6.12 
   (formulas like Y ~ . - X not handled correctly by predict.randomForest).
+- bugfix in 'impute_pmm': argument 'predictor' was ignored.
 
 version 0.2.0
 - Added na.action option for model-based imputation (thanks to Soogeun Park)
