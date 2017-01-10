@@ -99,6 +99,8 @@ rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), 
 #' 
 #' @export
 impute_mf <- function(dat, formula,...){
+  stopifnot(inherits(formula,"formula"))
+  if ( not_installed("missForest") ) return(dat)
   imputed <- get_imputed(formula,dat)
   predictors <- get_predictors(formula, dat)
   vars <- unique(c(imputed,predictors))
