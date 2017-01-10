@@ -104,7 +104,12 @@ impute_mf <- function(dat, formula,...){
   imputed <- get_imputed(formula,dat)
   predictors <- get_predictors(formula, dat)
   vars <- unique(c(imputed,predictors))
-  dat[imputed] <- missForest::missForest(dat[vars],...)[[1]][imputed]
+  imp <- tryCatch(missForest::missForest(dat[vars])[[1]], error=function(e){
+    warnf("Could not execute missForest::missForest: %s\n Returning original data"
+         , e$message)
+    dat
+  })
+  dat[imputed] <- imp[imputed]
   dat
 }
 
