@@ -95,8 +95,16 @@ rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), 
   dat
 }
 
-
-
+#' @rdname impute_
+#' 
+#' @export
+impute_mf <- function(dat, formula,...){
+  imputed <- get_imputed(formula,dat)
+  predictors <- get_predictors(formula, dat)
+  vars <- unique(c(imputed,predictors))
+  dat[imputed] <- missForest::missForest(dat[vars],...)[[1]][imputed]
+  dat
+}
 
 
 

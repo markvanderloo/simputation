@@ -1,5 +1,6 @@
 version 0.2.1
 - added support for elasticnet / lasso regression (using 'glmnet')
+- added support for missForest imputation (using 'missForest')
 - renamed 'na.action' -> 'na_action' for consistency within simputation.
 - default 'na_action' for 'impute_cart' is now 'na.rpart'.
 - dependencies on larger packages (randomForest, glmnet) moved to 'suggests'.

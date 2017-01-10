@@ -14,6 +14,10 @@ Imports: stats, MASS, rpart, gower
 URL: https://github.com/markvanderloo/simputation
 BugReports: https://github.com/markvanderloo/simputation/issues
 Date: 2016-12-30
-Suggests: testthat, knitr, rmarkdown, dplyr, VIM, randomForest, glmnet
+Suggests: testthat, knitr, rmarkdown, dplyr, 
+    VIM, 
+    randomForest, 
+    glmnet, 
+    missForest
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
