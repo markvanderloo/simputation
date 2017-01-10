@@ -96,7 +96,9 @@ test_that("grouped imputation",{
   wom1[c(1,15),1] <- mean(wom[,1],na.rm=TRUE)
   wom2[c(1,15),1] <- tapply(wom2[,1],wom2$foo,mean,na.rm=TRUE)
   expect_equal(impute_proxy(wom,height ~ mean(height,na.rm=TRUE)*rep(1,length(height))),wom1)
+  expect_equal(impute_proxy(wom,height ~ mean(height,na.rm=TRUE)),wom1)
   expect_equal(impute_proxy(wom,height ~ mean(height,na.rm=TRUE)*rep(1,length(height))|foo),wom2)
+  expect_equal(impute_proxy(wom,height ~ mean(height,na.rm=TRUE)|foo),wom2)
   
 })
 

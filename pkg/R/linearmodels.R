@@ -336,15 +336,20 @@ impute_proxy <- function(dat, formula, add_residual = c("none","observed","norma
   groups <- groups(formula, dat = dat)
   predicted <- get_imputed(formula,names(dat))
   
+  proxy <- function(d){
+    v <- eval(formula[[3]],envir=d)
+    if (length(v)==1) v <- rep(v,nrow(d))
+    v
+  } 
+  
   imp_val <- if (has_groups(formula)){
     formula <- remove_groups(formula)
-    unsplit(lapply(split(dat,dat[groups])
-              , function(d) eval(formula[[3]],envir=d)), dat[groups])
+    unsplit(lapply(split(dat, dat[groups]), proxy), dat[groups])
   } else {
-    eval(formula[[3]],envir = dat)
+    proxy(dat)
   }
-  if(length(imp_val) != nrow(dat)){
-    warnf("Right-hand-side of\n %s\n must evaluate to vector of length %d. Returning original data"
+  if(length(imp_val) != nrow(dat) ){
+    warnf("Right-hand-side of\n %s\n must evaluate to vector of length %d or 1. Returning original data"
           , deparse(formula), nrow(dat))
     return(dat)
   }
