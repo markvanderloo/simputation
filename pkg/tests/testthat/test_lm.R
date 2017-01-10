@@ -61,16 +61,16 @@ test_that("stuff gets imputed",{
     expect_equal(sum(is.na(fn(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width, add_residual="observed"))),3,info=nm)
     
   }
-  
-  # Imputation using glmnet. Expects two predictors at minimum (intercept not counted)
-  # add dummy variable
-  nm <- "impute_en"
-  irisNA$PW2 <- 2 * irisNA$Petal.Width
-  expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length ~ Sepal.Width + PW2))), 7, info=nm)  
-  expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width + PW2))),3,info=nm)
-  expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width + PW2, add_residual="normal"))),3,info=nm)
-  expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width + PW2, add_residual="observed"))),3,info=nm)
-  
+  if (requireNamespace("glmnet",quietly = TRUE)){
+    # Imputation using glmnet. Expects two predictors at minimum (intercept not counted)
+    # add dummy variable
+    nm <- "impute_en"
+    irisNA$PW2 <- 2 * irisNA$Petal.Width
+    expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length ~ Sepal.Width + PW2))), 7, info=nm)  
+    expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width + PW2))),3,info=nm)
+    expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width + PW2, add_residual="normal"))),3,info=nm)
+    expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width + PW2, add_residual="observed"))),3,info=nm)
+  }
   
   expect_error(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width + Petal.Length)
                ,regex="Need")

@@ -25,6 +25,15 @@ An R package to make imputation simple. Currently supported methods include
   - Proxy imputation (copy from other variable) 
 
 
+### Installation
+
+To install simputation and all packages needed to support various imputation
+models do the following.
+```r
+install.packages("simputation", dependencies=TRUE)
+```
+
+
 ### Example usage
 
 Create some data suffering from missings
@@ -49,11 +58,6 @@ dat %>%
 - A [blogpost](http://www.markvanderloo.eu/yaRb/2016/09/13/announcing-the-simputation-package-make-imputation-simple/) introducing the package
 - The introductory [vignette](https://cran.r-project.org/web/packages/simputation/vignettes/intro.html)
 
-### Installation
-
-```r
-install.packages("simputation")
-```
 
 Beta versions can be installed from my [drat](http://cran.r-project.org/package=drat) repo. If you use the OS whose name shall not be spoken, first install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
 ```r

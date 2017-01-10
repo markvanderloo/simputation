@@ -1,8 +1,90 @@
 
 not_installed <- function(pkg, action="Returning original data"){
   if(requireNamespace(pkg,quietly=TRUE)) return(FALSE)
-  warnf("Package %s is needed but not found. %s", pkg, action)
+  warnf("Package '%s' is needed but not found. %s", pkg, action)
   TRUE
+}
+
+#' Capabilities depending on suggested packages.
+#'
+#' Simputation relies on a number of packages for model estimation
+#' and/or imputation. Not all of these packages are installed when
+#' \pkg{simputation} is installed. 
+#' 
+#' @section details:
+#' 
+#' \code{simputation_capabilities} Calls every \code{\link{impute_}} function and
+#' grabs the warning message (if any) stating that a package is missing.
+#' 
+#' \code{simputation_suggests} checks which of the suggested packages
+#' implementing statistical models are available.
+#' 
+#' 
+#' @return
+#' For \code{simputation_capabilities} A named \code{character} vector of class
+#' \code{simputation.capabilities}. The class attribute allows pretty-printing
+#' of the output.
+#'
+#' @export
+simputation_capabilities <- function(){
+  funs <- getNamespaceExports("simputation")
+  funs <- funs[grep("impute_",funs)]
+  
+  out <- rep("OK",length(funs))
+  names(out) <- funs
+  women <- data.frame(height=1:15, weight=1:15)
+  
+  L <- sapply(funs, function(fun){
+    frm <- if (grepl("const",fun)) height ~ 1 else height ~ weight
+    ifun <- getExportedValue("simputation",fun)
+    tryCatch(ifun(women, frm), warning = function(e){ 
+      out[fun] <<- gsub("\\..*", "", e$message)
+    })
+  })
+  class(out) <- c("simputation.capabilities","character")
+  out
+}
+
+#' @rdname simputation_capabilities 
+#' @param lib.loc Where to check whether a package is installed (passed to 
+#'   \code{\link[utils]{installed.packages}})
+#'   
+#' @return 
+#' For \code{simputation_suggests} a \code{logical} vector, stating which
+#' suggested packages are currently installed (\code{TRUE}) or not
+#' (\code{FALSE}).
+#' 
+#' @export
+simputation_suggests <- function(lib.loc=NULL){
+  # this function finds the actual dependencies, and faster
+  # then utils::package_dependencies
+  fl <- system.file("DESCRIPTION", package="simputation")
+  if(file.exists(fl)){ 
+    dcf <- read.dcf(fl)
+  } else {
+    cat(sprintf("Could not find DESCRIPTION file"))
+  }
+  sug <- trimws(strsplit(dcf[,"Suggests"], ",\\n?")[[1]])
+  # remove pkgs not needed for model computation
+  sug <- setdiff(sug,c("knitr","rmarkdown","dplyr","testthat"))
+  inst <- rownames(installed.packages(lib.loc=lib.loc))
+  out <- sug %in% inst
+  names(out) <- sug
+  out
+}
+
+
+#' print output of simputation_capabilities
+#'
+#' @param x an R object
+#' @param ... unused
+#' 
+#' @export
+#' @keywords internal
+print.simputation.capabilities <- function(x, ...){
+  nm <- names(x)
+  nm[1] <- paste0(" ",nm[1]," ")
+  cat(sprintf("%-13s: %s\n",nm,x))
 }
 
 

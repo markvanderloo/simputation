@@ -42,25 +42,28 @@ test_that("CART models",{
   
 })
 
-test_that("RandomForest imputation",{
-  dat <- iris
-  dat[1:3,1] <- dat[4:7,5] <- NA 
-  expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width))))
-  expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width, add_residual="observed"))))
-  expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width, add_residual="normal"))))
-
-  dat <- iris
-  dat[sample(1:nrow(iris),25),"Species"] <- NA
-  expect_true(!any(is.na(impute_rf(dat, Species ~.))))
+if (requireNamespace("randomForest",quietly = TRUE)){
+  test_that("RandomForest imputation",{
+    dat <- iris
+    dat[1:3,1] <- dat[4:7,5] <- NA 
+    expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width))))
+    expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width, add_residual="observed"))))
+    expect_true(!any(is.na(impute_rf(dat, Species + Sepal.Length ~ Sepal.Width, add_residual="normal"))))
   
-})
+    dat <- iris
+    dat[sample(1:nrow(iris),25),"Species"] <- NA
+    expect_true(!any(is.na(impute_rf(dat, Species ~.))))
+    
+  })
+}
 
-test_that("missForest imputation",{
-  dat <- iris
-  dat[1:3,1] <- dat[4:7,5] <- NA 
-  expect_true(!any(is.na(impute_mf(dat, Species + Sepal.Length ~ Sepal.Width))))
-})
-
+if (requireNamespace("missForest",quietly=TRUE)){
+  test_that("missForest imputation",{
+    dat <- iris
+    dat[1:3,1] <- dat[4:7,5] <- NA 
+    expect_true(!any(is.na(impute_mf(dat, Species + Sepal.Length ~ Sepal.Width))))
+  })
+}
 
 test_that("grouped imputation",{
   dat <- data.frame(
@@ -70,5 +73,7 @@ test_that("grouped imputation",{
   )
   dat[2,1] <- NA
   expect_lt(impute_cart(dat, x ~ y|z)[2,1],impute_cart(dat, x ~ y)[2,1])
-  expect_lt(impute_rf(dat, x ~ y|z)[2,1],impute_rf(dat, x ~ y)[2,1])
+  if (requireNamespace("randomForest",quietly = TRUE)){
+    expect_lt(impute_rf(dat, x ~ y|z)[2,1],impute_rf(dat, x ~ y)[2,1])
+  }
 })
