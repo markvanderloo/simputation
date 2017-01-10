@@ -333,13 +333,21 @@ impute_median <- function(dat, formula, add_residual = c("none","observed","norm
 impute_proxy <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
-  formula <- remove_groups(formula)
+  groups <- groups(formula, dat = dat)
   predicted <- get_imputed(formula,names(dat))
-  predictor <- get_predictors(formula, names(dat))
-  if( length(predictor) != 1 )
-    stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )
   
-  imp_val <- eval(formula[[3]],envir = dat)
+  imp_val <- if (has_groups(formula)){
+    formula <- remove_groups(formula)
+    unsplit(lapply(split(dat,dat[groups])
+              , function(d) eval(formula[[3]],envir=d)), dat[groups])
+  } else {
+    eval(formula[[3]],envir = dat)
+  }
+  if(length(imp_val) != nrow(dat)){
+    warnf("Right-hand-side of\n %s\n must evaluate to vector of length %d. Returning original data"
+          , deparse(formula), nrow(dat))
+    return(dat)
+  }
   for ( p in predicted){
     ina <- is.na(dat[,p])
     dat[ina,p] <- imp_val[ina] + 

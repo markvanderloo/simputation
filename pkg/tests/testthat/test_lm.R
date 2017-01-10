@@ -72,8 +72,6 @@ test_that("stuff gets imputed",{
     expect_equal(sum(is.na(impute_en(irisNA, Sepal.Length + Sepal.Width ~ Petal.Width + PW2, add_residual="observed"))),3,info=nm)
   }
   
-  expect_error(impute_proxy(irisNA, Sepal.Length ~ Sepal.Width + Petal.Length)
-               ,regex="Need")
   # Try imputing a column where everything is missing (so models don't fit)
   irisNA$foo <- NA_real_
   for ( f in list(impute_lm, impute_rlm, impute_median) ){
@@ -94,6 +92,11 @@ test_that("grouped imputation",{
   expect_equal(impute_median(wom, height ~ foo),impute_median(wom, height ~ 1|foo))
   expect_equal(impute_proxy(wom, height ~ weight), impute_proxy(wom, height ~ weight | foo))
   expect_equal(impute_const(wom, height ~ 7), impute_const(wom, height ~ 7 | foo))
+  wom2 <- wom1 <- wom
+  wom1[c(1,15),1] <- mean(wom[,1],na.rm=TRUE)
+  wom2[c(1,15),1] <- tapply(wom2[,1],wom2$foo,mean,na.rm=TRUE)
+  expect_equal(impute_proxy(wom,height ~ mean(height,na.rm=TRUE)*rep(1,length(height))),wom1)
+  expect_equal(impute_proxy(wom,height ~ mean(height,na.rm=TRUE)*rep(1,length(height))|foo),wom2)
   
 })
 
