@@ -339,10 +339,11 @@ impute_proxy <- function(dat, formula, add_residual = c("none","observed","norma
   if( length(predictor) != 1 )
     stop(sprintf("Need precisely one predictor, got %d",length(predictor)) )
   
+  imp_val <- eval(formula[[3]],envir = dat)
   for ( p in predicted){
     ina <- is.na(dat[,p])
-    dat[ina,p] <- dat[ina,predictor] + 
-      get_res(sum(ina), dat[!ina,predictor] - dat[!ina,p], type=add_residual)
+    dat[ina,p] <- imp_val[ina] + 
+      get_res(sum(ina), imp_val[!ina] - dat[!ina,p], type=add_residual)
   }
   dat
 }

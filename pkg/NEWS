@@ -1,13 +1,14 @@
 version 0.2.1
 - added support for elasticnet / lasso regression (using 'glmnet')
 - added support for missForest imputation (using 'missForest')
+- impute_proxy now supports transformations in the rhs of formula.
 - new functions 'simputation_capabilities' and 'simputation_suggests'
   detect which packages supporting imputation methods are available.
 - renamed 'na.action' -> 'na_action' for consistency within simputation.
-- default 'na_action' for 'impute_cart' is now 'na.rpart'.
-- dependencies on larger packages (randomForest, glmnet) moved to 'suggests'.
+- default 'na_action' for 'impute_cart' is now 'na.rpart'
+- dependencies on larger packages (randomForest, glmnet) moved to 'suggests'
 - Fix in 'impute_rf': needed workaround for bug in randomForest 4.6.12 
-  (formulas like Y ~ . - X not handled correctly by predict.randomForest).
+  (formulas like Y ~ . - X not handled correctly by predict.randomForest)
 - bugfix in 'impute_pmm': argument 'predictor' was ignored.
 
 version 0.2.0
