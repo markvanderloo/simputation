@@ -172,6 +172,7 @@ do_by <- function(dat,groups,.fun,...){
 
 
 get_imputed <- function(frm, dat){
+  if (length(frm)<3) return(character(0))
   if (!is_additive(frm[[2]])){
     stop(sprintf("Invalid specification of imputed variables: '%s'",deparse(frm[[2]]))
       ,call.=FALSE)
@@ -208,13 +209,15 @@ is_additive <- function(expr,val=TRUE){
 # dat: data.frame
 # one_ok: is <lhs> ~ 1 also ok?
 get_predictors <- function(frm, dat, one_ok = FALSE){
-  if (one_ok) is_one <- frm[[3]] == 1
+  # normally 3, 2 for formulas of type ~ x
+  n <- length(frm)
+  if (one_ok) is_one <- frm[[n]] == 1
   
-  if (  (one_ok && is_one) || is_additive(frm[[3]])  ){
-    frm[[2]] <- 1
+  if (  (one_ok && is_one) || is_additive(frm[[n]])  ){
+    if( n == 3 ) frm[[2]] <- 1
     colnames(attr(terms(frm, data=dat),"factors"))
   } else {
-    stop(sprintf("Invalid specification of predictors %s:",deparse(frm[[3]])), call.=FALSE)    
+    stop(sprintf("Invalid specification of predictors %s:",deparse(frm[[n]])), call.=FALSE)    
   }
 
 }

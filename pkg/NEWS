@@ -1,6 +1,7 @@
 version 0.2.1
 - added support for elasticnet / lasso regression (using 'glmnet')
 - added support for missForest imputation (using 'missForest')
+- added support for EMB imputation (using 'Amelia')
 - impute_proxy now supports transformations in the rhs of formula.
 - new functions 'simputation_capabilities' and 'simputation_suggests'
   detect which packages supporting imputation methods are available.
