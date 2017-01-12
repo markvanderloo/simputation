@@ -14,6 +14,7 @@ An R package to make imputation simple. Currently supported methods include
     - ridge/elasticnet/lasso regression (from version >= 0.2.1)
     - CART models
     - Random forest
+- Model based, multivariate
     - [missForest](https://CRAN.R-project.org/package=missForest) (from version >= 0.2.1)
     - [EMB imputation](https://CRAN.R-project.org/package=Amelia) (from version >= 0.2.1)
 - Donor imputation (including various donor pool specifications)
