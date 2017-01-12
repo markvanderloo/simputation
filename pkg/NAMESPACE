@@ -3,7 +3,7 @@
 S3method(print,simputation.capabilities)
 export(impute_cart)
 export(impute_const)
-export(impute_em)
+export(impute_emb)
 export(impute_en)
 export(impute_knn)
 export(impute_lm)

@@ -6,7 +6,7 @@
 #'  \code{1} print iterations to screen.
 #'
 #' @export
-impute_em <- function(dat, formula, p2s=0, ...){
+impute_emb <- function(dat, formula, p2s=0, ...){
   if ( not_installed("Amelia") ) return(dat)
   prd <- get_predictors(formula, dat)
   imp <- get_imputed(formula, dat)
