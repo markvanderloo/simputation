@@ -1,6 +1,6 @@
 
 
-#' @rdname impute_
+#' @rdname impute_lm
 #' 
 #' @export
 impute_em <- function(dat, formula, p2s=0,...){
@@ -40,12 +40,13 @@ impute_em <- function(dat, formula, p2s=0,...){
     # http://fourier.eng.hmc.edu/e161/lectures/gaussianprocess/node7.html
     a <- apply(x_sc,1,function(x_){
       i_miss <- is.na(x_)
+      i_obs <- !i_miss
       if (!any(i_miss)) return(x_)
-      x_obs <- x_[!i_miss]
+      x_obs <- x_[i_obs]
       mu_miss <- mu_sc[i_miss]
-      mu_obs <- mu_sc[!i_miss]
-      Smo <- cov_sc[i_miss,!i_miss,drop=FALSE]
-      Soo <- cov_sc[!i_miss,!i_miss,drop=FALSE]
+      mu_obs <- mu_sc[i_obs]
+      Smo <- cov_sc[i_miss, i_obs, drop=FALSE]
+      Soo <- cov_sc[i_obs , i_obs, drop=FALSE]
       x_[i_miss] <- mu_miss + Smo%*%solve(Soo,(x_obs - mu_obs))
       x_
     })
@@ -57,6 +58,7 @@ impute_em <- function(dat, formula, p2s=0,...){
 
 }
 
+# inverse z-transform, x: data.frame or matrix
 unscale <- function(x,mu,sd){
   for ( i in seq_len(ncol(x)) ){
     x[,i] <- sd[i]*x[,i] + mu[i]
@@ -67,7 +69,7 @@ unscale <- function(x,mu,sd){
 
 
 
-#' @rdname impute_
+#' @rdname impute_lm
 #' @param p2s verbosity of \code{\link[Amelia]{amelia}}: \code{0}: no output,
 #'  \code{1} print iterations to screen.
 #'

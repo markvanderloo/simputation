@@ -1,5 +1,5 @@
 
-#' Impute missing data
+#' (Robust) linear regression imputation
 #'
 #' Use to fit and impute missing data.
 #'
@@ -132,8 +132,7 @@
 #' # impute both Sepal.Length and Sepal.Width, using robust linear regression
 #' i2 <- impute_rlm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
 #' 
-#' @name impute_
-#' @rdname impute_ 
+#' @rdname impute_lm
 #' @export
 impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
                       ,na_action=na.omit, ...){
@@ -144,7 +143,7 @@ impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
 }
 
 
-#' @rdname impute_
+#' @rdname impute_lm
 #' @export
 impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), na_action=na.omit,...){
   add_residual <- match.arg(add_residual)
@@ -155,7 +154,7 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 
 
 
-#' @rdname impute_
+#' @rdname impute_lm
 #' 
 #' @param family Response type for elasticnet / lasso regression. For 
 #' \code{family="gaussian"} the imputed variables are general numeric variables.
@@ -261,7 +260,7 @@ lmwork <- function(dat, formula, add_residual, fun, na.action, ...){
 }
 
 
-#' @rdname impute_
+#' @rdname impute_lm
 #' @export
 impute_const <- function(dat, formula, add_residual = c("none","observed","normal"),...){
   stopifnot(inherits(formula,"formula"))
@@ -295,7 +294,7 @@ impute_const <- function(dat, formula, add_residual = c("none","observed","norma
 
 
 
-#' @rdname impute_
+#' @rdname impute_lm
 #' @export
 impute_median <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(formula,"formula"))
@@ -333,7 +332,7 @@ impute_median <- function(dat, formula, add_residual = c("none","observed","norm
 
 
 
-#' @rdname impute_
+#' @rdname impute_lm
 #' @export
 impute_proxy <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
   stopifnot(inherits(formula,"formula"))

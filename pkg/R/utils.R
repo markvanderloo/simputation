@@ -13,7 +13,7 @@ not_installed <- function(pkg, action="Returning original data"){
 #' 
 #' @section details:
 #' 
-#' \code{simputation_capabilities} Calls every \code{\link{impute_}} function and
+#' \code{simputation_capabilities} Calls every \code{impute_} function and
 #' grabs the warning message (if any) stating that a package is missing.
 #' 
 #' \code{simputation_suggests} checks which of the suggested packages

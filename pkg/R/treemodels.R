@@ -1,12 +1,33 @@
 
 
-#' @rdname impute_
+#' Decision Tree Imputation
+#' 
+#' Imputation based on CART models or Random Forests.
+#' 
+#' @param dat \code{[data.frame]}, with variables to be imputed and their
+#'   predictors.
+#' @param formula \code{[formula]} imputation model description (see Details below).
 #' @param cp The complexity parameter used to \code{\link[rpart]{prune}} the CART model. If
 #'    omitted, no pruning takes place. If a single number, the same complexity parameter is
 #'    used for each imputed variable. If of length \code{#} of variables imputed, the complexity
 #'    parameters used must be in the same order as the predicted variables in the \code{model}
 #'    formula.
-#'    
+#' @param add_residual \code{[character]} Type of residual to add. \code{"normal"} 
+#'   means that the imputed value is drawn from \code{N(mu,sd)} where \code{mu}
+#'   and \code{sd} are estimated from the model's residuals (\code{mu} should equal
+#'   zero in most cases). If \code{add_residual = "observed"}, residuals are drawn
+#'   (with replacement) from the model's residuals. Ignored for non-numeric 
+#'   predicted variables.
+#' @param na_action \code{[function]} what to do with missings in training data.
+#'   By default cases with missing values in predicted or predictors are omitted
+#'   (see `Missings in training data').
+#' @param ... further arguments passed to 
+#' \itemize{
+#' \item{\code{\link[rpart]{rpart}} for \code{impute_cart}}
+#' \item{\code{\link[randomForest]{randomForest}} for \code{impute_rf}}
+#' \item{\code{\link[missForest]{missForest}} for \code{impute_mf}}
+#' }
+#' @rdname impute_tree   
 #' @export
 impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp,
                         na_action=na.rpart, ...){
@@ -54,7 +75,7 @@ cart_work <- function(dat, formula, add_residual, cp, na_action, ...){
 }
 
 
-#' @rdname impute_
+#' @rdname impute_tree
 #' 
 #' @export
 impute_rf <- function(dat, formula, add_residual = c("none","observed","normal")
@@ -95,7 +116,7 @@ rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), 
   dat
 }
 
-#' @rdname impute_
+#' @rdname impute_tree
 #' 
 #' @export
 impute_mf <- function(dat, formula,...){

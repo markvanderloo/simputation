@@ -2,8 +2,26 @@
 # ------------------------------------------------------------------------------
 # RANDOM HOTDECK IMPUTATION
 
-
+#' Hot deck imputation
+#' 
+#' Hot-deck imputation methods including random, sequential, knn and
+#' predictive mean matching.
+#' 
+#' 
+#' @param dat \code{[data.frame]}, with variables to be imputed and their
+#'   predictors.
+#' @param formula \code{[formula]} imputation model description (see Details below).
 #' @param backend Choose the backend for imputation.
+#' @param pool Specify donor pool. See under 'Hot deck imputation'.
+#' @param prob \code{[numeric]} Sampling probability weights (passed through to
+#'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
+#' @param ... further arguments passed to \code{\link[VIM:hotdeck]{VIM::hotdeck}}
+#'   if \code{VIM} is chosen as backend, otherwise
+#' \itemize{
+#'   \item{\code{\link[base]{order}} for \code{impute_shd}} 
+#'   \item{The \code{predictor} for \code{impute_pmm}}
+#' }
+#' 
 #' 
 #' @section Hot deck imputation:
 #' 
@@ -81,10 +99,8 @@
 #' 
 #' 
 #'
-#' @rdname impute_
-#' @param pool Specify donor pool. See under 'Hot deck imputation'.
-#' @param prob \code{[numeric]} Sampling probability weights (passed through to
-#'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
+#' @rdname impute_hd
+#' 
 #' @export
 impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariate")
                        , prob, backend=getOption("simputation.hdbackend",default=c("simputation","VIM"))
@@ -205,7 +221,7 @@ hd_vim <- function(data, variable, ord_var, domain_var, imp_var=FALSE,...){
 # SEQUENTIAL HOTDECK IMPUTATION
 
 
-#' @rdname impute_
+#' @rdname impute_hd
 #' @param order Last Observation Carried Forward or Next Observarion Carried Backward
 #' @export
 impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariate")
@@ -338,7 +354,7 @@ multi_shd <- function(x){
 # PMM IMPUTATION
 
 
-#' @rdname impute_
+#' @rdname impute_hd
 #' @param predictor \code{[function]} Imputation to use for predictive part in
 #'   predictive mean matching. Any of the \code{impute_} functions of this
 #'   package (it makes no sense to use a hot-deck imputation).
@@ -431,7 +447,7 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
 
 
 
-#' @rdname impute_
+#' @rdname impute_hd
 #' @param k Number of nearest neighbours to draw the donor from.
 #' @export
 impute_knn <- function(dat, formula
