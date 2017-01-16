@@ -25,7 +25,7 @@
 #' \item{The \code{predictor} for \code{impute_pmm}}
 #' \item{\code{\link[randomForest]{randomForest}} for \code{impute_rf}}
 #' \item{\code{\link[missForest]{missForest}} for \code{impute_mf}}
-#' \item{\code{\link[Amelia]{amelia}} for \code{impute_emb}}
+#' \item{\code{\link[Amelia]{amelia}} for \code{impute_emb} or \code{impute_em}}
 #' }
 #' 
 #' @section Specifying the imputation model:
@@ -94,6 +94,7 @@
 #' \code{impute_lm} \tab Standard linear model (\code{\link[stats:lm]{stats::lm}})\cr
 #' \code{impute_rlm} \tab Robust linear model based on \eqn{M}-estimation. (\code{\link[MASS:rlm]{MASS::rlm}}).\cr
 #' \code{impute_en} \tab Elasticnet or lasso regression (\code{\link[glmnet:glmnet]{glmnet::glmnet}}).\cr
+#' \code{impute_em} \tab Estimate parameters of multivariat Normal distribution with EM algorithm and impute expected values.\cr
 #' \code{impute_emb} \tab Stochastic imputation based on bootstrapped EM
 #'   estimation of multivariate normal parameters.
 #'   (\code{\link[Amelia:amelia]{Amelia::amelia}})\cr

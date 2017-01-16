@@ -1,7 +1,14 @@
 
 context("EM imputation")
 
-test_that("The right stuff gets imputed", {
+test_that("EM imputation",{
+  x <- iris[-5]
+  x[1:3,1] <- x[5:7,2] <- NA
+  expect_equal(sum(is.na(impute_em(x, ~ . ))),0)
+  expect_equal(sum(is.na(impute_em(x, ~ . - Sepal.Width))),3)
+})
+
+test_that("EMB imputation (stochastic)", {
   dd <- data.frame( 
     x = rnorm(20), y=rnorm(20),z=rnorm(20)
   )
