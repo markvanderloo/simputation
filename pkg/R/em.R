@@ -36,7 +36,7 @@ impute_em <- function(dat, formula, p2s=0,...){
     mu_obs <- mu_sc[!i_miss]
     Som <- cov_sc[i_miss,!i_miss,drop=FALSE]
     Soo <- cov_sc[!i_miss,!i_miss,drop=FALSE]
-    x_[i_miss] <- mu_miss + Som%*%Soo%*%(x_obs - mu_obs)
+    x_[i_miss] <- mu_miss + Som%*%solve(Soo,(x_obs - mu_obs))
     x_
   })
   # unscale and insert into original data
