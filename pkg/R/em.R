@@ -5,44 +5,56 @@
 #' @export
 impute_em <- function(dat, formula, p2s=0,...){
   if ( not_installed("Amelia") ) return(dat)
+  groups <- groups(dat,formula)
+  formula <- remove_groups(formula)
   prd <- get_predictors(formula, dat)
   imp <- get_imputed(formula, dat)
   imp <- unique(c(imp, prd))
-  
-  out <- tryCatch(Amelia::amelia(dat[imp], m=1, p2s=p2s, boot.type="none", ...)
-       , error = function(e){
-         warnf("Amelia::amelia stopped with message\n %s\n Returning original data"
-               , e$message)
-         dat
-  })  
-  if (identical(out,dat)) return(dat)
 
-  mu_sc <- out$mu
-  cov_sc <- out$covMatrices[,,1]
-  
-  # scale for imputation
-  x <- dat[imp]
-  mu_x <- colMeans(x,na.rm=TRUE)
-  sd_x <- apply(x,2,sd,na.rm=TRUE)
-  x_sc <- scale(x,center=mu_x, scale=sd_x)
-  
-  # impute scaled values. For derivation of imputation equation 
-  # See http://fourier.eng.hmc.edu/e161/lectures/gaussianprocess/node7.html
-  a <- apply(x_sc,1,function(x_){
-    i_miss <- is.na(x_)
-    if (!any(i_miss)) return(x_)
-    x_obs <- x_[!i_miss]
-    mu_miss <- mu_sc[i_miss]
-    mu_obs <- mu_sc[!i_miss]
-    Som <- cov_sc[i_miss,!i_miss,drop=FALSE]
-    Soo <- cov_sc[!i_miss,!i_miss,drop=FALSE]
-    x_[i_miss] <- mu_miss + Som%*%solve(Soo,(x_obs - mu_obs))
-    x_
-  })
-  # unscale and insert into original data
-  dat[imp] <- unscale(t(a),mu=mu_x,sd=sd_x)
+  d_imp <- iunsplit(lapply(isplit(dat[imp],dat[groups]), function(d){
+    # We need this ugly escape since Amelia sends errors when passed a
+    # complete dataset.
+    if (!anyNA(d)) return(d)
+    # Ok, let's get to work
+    out <- tryCatch({Amelia::amelia(d, m=1, p2s=p2s, boot.type="none", ...)}
+        , error = function(e){
+          warnf("Amelia::amelia stopped with message\n %s\n Returning original data"
+                , e$message)
+          FALSE
+    }) # end tryCatch
+    # if Amelia stopped, return data untouched
+    if (identical(out,FALSE)) return(d)
+    
+    # extract parameters (computed on z-transformed columns)
+    mu_sc <- out$mu
+    cov_sc <- out$covMatrices[,,1]
+    
+    # z-transform columns for imputation
+    x <- d
+    mu_x <- colMeans(x,na.rm=TRUE)
+    sd_x <- apply(x,2,sd,na.rm=TRUE)
+    x_sc <- scale(x,center=mu_x, scale=sd_x)
+
+    # Impute scaled values. For derivation of imputation equation see e..g
+    # http://fourier.eng.hmc.edu/e161/lectures/gaussianprocess/node7.html
+    a <- apply(x_sc,1,function(x_){
+      i_miss <- is.na(x_)
+      if (!any(i_miss)) return(x_)
+      x_obs <- x_[!i_miss]
+      mu_miss <- mu_sc[i_miss]
+      mu_obs <- mu_sc[!i_miss]
+      Smo <- cov_sc[i_miss,!i_miss,drop=FALSE]
+      Soo <- cov_sc[!i_miss,!i_miss,drop=FALSE]
+      x_[i_miss] <- mu_miss + Smo%*%solve(Soo,(x_obs - mu_obs))
+      x_
+    })
+    as.data.frame(unscale(t(a),mu=mu_x,sd=sd_x))
+  }),dat[groups]) # end iunsplit
+  dat[imp] <- d_imp 
   dat
 }
+
+
 
 unscale <- function(x,mu,sd){
   for ( i in seq_len(ncol(x)) ){
@@ -61,15 +73,23 @@ unscale <- function(x,mu,sd){
 #' @export
 impute_emb <- function(dat, formula, p2s=0, ...){
   if ( not_installed("Amelia") ) return(dat)
+  groups <- groups(dat, formula)
+  formula <- remove_groups(formula)
   prd <- get_predictors(formula, dat)
   imp <- get_imputed(formula, dat)
   imp <- unique(c(imp, prd))
+ 
+  d_imp <- iunsplit(lapply(isplit(dat[imp],dat[groups]), function(d){
+    if (!anyNA(d)) return(d)
+    tryCatch(Amelia::amelia(d, m=1, p2s=p2s, ...)$imputations[[1]]
+      , error = function(e){
+       warnf("Amelia::amelia stopped with message\n %s\n Returning original data"
+             , e$message)
+       d
+    })  
+    
+  }), dat[groups]) # end iunsplit
   
-  dat[imp] <- tryCatch(Amelia::amelia(dat[imp], m=1, p2s=p2s, ...)$imputations[[1]]
-       , error = function(e){
-         warnf("Amelia::amelia stopped with message\n %s\n Returning original data"
-               , e$message)
-         dat[imp]
-       })  
+  dat[imp] <- d_imp
   dat
 }

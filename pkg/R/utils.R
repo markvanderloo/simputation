@@ -129,28 +129,42 @@ isplit <- function(x,f,drop=FALSE,...){
   }
 }
 
+# give 'unsplit' reasonable behaviour
+iunsplit <- function(value, f, drop=FALSE){
+  if (length(f)==0){
+    value[[1]]
+  } else {
+    unsplit(value=value, f=f, drop=drop)
+  }
+}
 
 # General layout of imputation spec is
 # [imputed vars] ~ [predictive vars] [| [grouping vars]]
 
 has_groups <- function(frm){
-  length(frm) == 3L &&  length(frm[[3]]) == 3L && frm[[3]][[1]] == "|"
+  (length(frm) == 3L &&  length(frm[[3]]) == 3L && frm[[3]][[1]] == "|") ||
+    (length(frm) == 2L && length(frm[[2]]) == 3L && frm[[2]][[1]] == "|" )
 }
+
 # get groups
 groups <- function(dat, frm){
   grp <- character()
+  # dplyr compatability:
   if (inherits(dat,"grouped_df")){
    grp <- sapply(attr(dat,"vars"), as.character)
   } 
+  # also take grouping from formula
   if (has_groups(frm)){
-    grp <- c(grp,all.vars(frm[[3]][[3]]))
+    n <- length(frm)
+    grp <- c(grp,all.vars(frm[[n]][[3]]))
   }
   unique(grp)
 }
 
 # remove group statement from formula
 remove_groups <- function(frm){
-  if(has_groups(frm)) frm[[3]] <- frm[[3]][[2]]
+  n <- length(frm)
+  if(has_groups(frm)) frm[[n]] <- frm[[n]][[2]]
   frm
 }
 
