@@ -25,8 +25,48 @@
 #' \itemize{
 #' \item{\code{\link[rpart]{rpart}} for \code{impute_cart}}
 #' \item{\code{\link[randomForest]{randomForest}} for \code{impute_rf}}
-#' \item{\code{\link[missForest]{missForest}} for \code{impute_mf}}
 #' }
+#' 
+#' @section Model specification:
+#' 
+#' Formulas are of the form
+#' 
+#' \code{IMPUTED_VARIABLES ~ MODEL_SPECIFICATION [ | GROUPING_VARIABLES ] }
+#' 
+#' The left-hand-side of the formula object lists the variable or variables to 
+#' be imputed. Variables on the right-hand-side are used as predictors in the
+#' CART or random forest model.
+#' 
+#' If grouping variables are specified, the data set is split according to the
+#' values of those variables, and model estimation and imputation occur
+#' independently for each group.
+#' 
+#' Grouping using \code{dplyr::group_by} is also supported. If groups are 
+#' defined in both the formula and using \code{dplyr::group_by}, the data is 
+#' grouped by the union of grouping variables. Any missing value in one of the 
+#' grouping variables results in an error.
+#' 
+#'
+#' @section Methodology:
+#' 
+#' \bold{CART imputation} by \code{impute_cart} can be used for numerical,
+#' categorical, or mixed data. Missing values are estimated using a 
+#' Classification and Regression Tree as specified by Breiman, Friedman and
+#' Olshen (1984). This means that prediction is fairly robust agains missingess
+#' in predictors.
+#' 
+#' \bold{Random Forest imputation} with \code{impute_rf} can be used for numerical,
+#' categorical, or mixed data. Missing values are estimated using a Random Forest
+#' model as specified by Breiman (2001).
+#' 
+#' 
+#' @references 
+#' 
+#' Breiman, L., Friedman, J., Stone, C.J. and Olshen, R.A., 1984. Classification
+#' and regression trees. CRC press.
+#'   
+#' Breiman, L., 2001. Random forests. Machine learning, 45(1), pp.5-32.
+#'
 #' @rdname impute_tree   
 #' @export
 impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp,
