@@ -14,7 +14,7 @@
 #' @param dat \code{[data.frame]} with variables to be imputed.
 #' @param formula \code{[formula]} imputation model description 
 #' @param verbose \code{[numeric]} Control amount of output printed to screen.
-#' Higher values mean more output. 
+#' Higher values mean more output, typically per iteration.
 #' \itemize{
 #' \item{0 or a number \eqn{\geq 1} for \code{impute_em}}
 #' \item{0, 1, or 2 for \code{impute_emb}}
@@ -29,6 +29,57 @@
 #'
 #' @section Model specification:
 #'   
+#' 
+#' Formulas are of the form
+#' 
+#' \code{[IMPUTED_VARIABLES] ~ MODEL_SPECIFICATION [ | GROUPING_VARIABLES ] }
+#' 
+#' When \code{IMPUTED_VARIABLES} is empty, every variable in 
+#' \code{MODEL_SPECIFICATION} will be imputed. When \code{IMPUTED_VARIABLES} is 
+#' specified, all variables in \code{IMPUTED_VARIABLES} and 
+#' \code{MODEL_SPECIFICATION} are part of the model, but only the 
+#' \code{IMPUTED_VARIABLES} are imputed in the output.
+#' 
+#' \code{GROUPING_VARIABLES} specify what categorical variables are used to
+#' split-impute-combine the data. Grouping using \code{dplyr::group_by} is also
+#' supported. If groups are defined in both the formula and using
+#' \code{dplyr::group_by}, the data is grouped by the union of grouping
+#' variables. Any missing value in one of the grouping variables results in an
+#' error.
+#' 
+#' @section Methodology:
+#' 
+#' \bold{EM-based imputation} with \code{impute_em} only works for numerical
+#' variables. These variables are assumed to follow a multivariate normal distribution
+#' for which the means and covariance matrix is estimated based on the EM-algorithm
+#' of Dempster Laird and Rubin (1977). The imputations are the expected values
+#' for missing values, conditional on the value of the estimated parameters.
+#' 
+#' \bold{EMB imputation} with \code{impute_emb} works only for numerical 
+#' variables. It is based on the algorithm of Honaker, King and Blackwell
+#' (2011). Bootstrap samples are drawn from the input dataset and for each
+#' sample the EM algorithm is executed to estimate multivariate normal
+#' parameters. From this set of parameters, one is sampled uniformly. 
+#' Imputations are drawn from the distribution with the sampled parameter, 
+#' conditional on observed values.
+#' 
+#' \bold{Multivariate Random Forest imputation} with \code{impute_mf} works for
+#' numerical, categorical or mixed data types. It is based on the algorithm
+#' of Stekhoven and Buehlman (2012). Missing values are imputed using a
+#' rough guess after which a predictive random forest is trained and used
+#' to re-impute themissing values. This is iterated until convergence.
+#' 
+#' 
+#' @references 
+#' Dempster, Arthur P., Nan M. Laird, and Donald B. Rubin. "Maximum likelihood
+#' from incomplete data via the EM algorithm." Journal of the royal statistical
+#' society. Series B (methodological) (1977): 1-38.
+#' 
+#' Honaker, J., King, G. and Blackwell, M., 2011. Amelia II: A program for
+#' missing data. Journal of statistical software, 45(7), pp.1-47.
+#' 
+#' Stekhoven, D.J. and Buehlmann, P., 2012. MissForest---non-parametric missing 
+#' value imputation for mixed-type data. Bioinformatics, 28(1), pp.112-118.
 #' 
 #' @export
 impute_em <- function(dat, formula, verbose=0,...){
