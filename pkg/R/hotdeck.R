@@ -4,37 +4,15 @@
 
 #' Hot deck imputation
 #' 
-#' Hot-deck imputation methods including random, sequential, knn and
-#' predictive mean matching.
+#' Hot-deck imputation methods include random and sequential hot deck, 
+#' k-nearest neighbours imputation and predictive mean matching.
 #' 
 #' 
 #' @param dat \code{[data.frame]}, with variables to be imputed and their
 #'   predictors.
 #' @param formula \code{[formula]} imputation model description (see Details below).
-#' @param backend Choose the backend for imputation.
-#' @param pool Specify donor pool. See under 'Hot deck imputation'.
-#' @param prob \code{[numeric]} Sampling probability weights (passed through to
-#'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
-#' @param ... further arguments passed to \code{\link[VIM:hotdeck]{VIM::hotdeck}}
-#'   if \code{VIM} is chosen as backend, otherwise
-#' \itemize{
-#'   \item{\code{\link[base]{order}} for \code{impute_shd}} 
-#'   \item{The \code{predictor} for \code{impute_pmm}}
-#' }
-#' 
-#' 
-#' @section Hot deck imputation:
-#' 
-#'  
-#' \itemize{
-#' \item{\code{impute_rhd} The predictor variables in the \code{model} argument are used to split the data 
-#' set into groups prior to imputation (use \code{~ 1} to specify that no grouping is applied).}
-#' \item{\code{impute_shd} The predictor variables are used to sort the data.}
-#' \item{\code{impute_knn} The predictors are used to determine Gower's distance 
-#'  between records (see \code{\link[gower]{gower_topn}})}.
-#'} 
-#' 
-#' The \code{pool} argument is used to specify the donor pool as follows.
+#' @param backend \code{[character]} Choose the backend for imputation.
+#' @param pool \code{[character]} Specify donor pool when \code{backend="simputation"}
 #' \itemize{
 #' \item{\code{"complete"}. Only records for which the variables on the
 #'    left-hand-side of the model formula are complete are used as donors. If a
@@ -48,7 +26,56 @@
 #'    pattern. If a record has multiple missings, all imputations are taken from 
 #'    a single donor.}
 #' } 
+#' @param prob \code{[numeric]} Sampling probability weights (passed through to
+#'   \code{\link[base]{sample}}). Must be of length \code{nrow(dat)}.
+#' @param ... further arguments passed to \code{\link[VIM:hotdeck]{VIM::hotdeck}}
+#'   if \code{VIM} is chosen as backend, otherwise they are passed to
+#' \itemize{
+#'   \item{\code{\link[base]{order}} for \code{impute_shd}} and
+#'   \code{backend="simputation"} 
+#'   \item{\code{\link[VIM:hotdeck]{VIM::hotdeck}}
+#'   for \code{impute_shd} and \code{impute_rhd} when \code{backend="VIM"}}.
+#'   \item{\code{\link[VIM:kNN]{VIM:kNN}} for \code{impute_knn} when 
+#'   \code{backend="VIM"}}
+#'   \item{The \code{predictor} function for \code{impute_pmm}.}
+#' }
 #' 
+#' 
+#' @section Model specification:
+#' 
+#' Formulas are of the form
+#' 
+#' \code{IMPUTED_VARIABLES ~ MODEL_SPECIFICATION [ | GROUPING_VARIABLES ] }
+#' 
+#' The left-hand-side of the formula object lists the variable or variables to 
+#' be imputed. The interpretation of the independent variables on the
+#' right-hand-side depends on the imputation method.
+#' 
+#' \itemize{
+#' \item{\code{impute_rhd} Variables in \code{MODEL_SPECIFICATION} and/or 
+#' \code{GROUPING_VARIABLES} are used to split the data set into groups prior to
+#' imputation. Use \code{~ 1} to specify that no grouping is to be applied.}
+#' \item{\code{impute_shd} Variables in \code{MODEL_SPECIFICATION} are used to 
+#' sort the data. When multiple variables are specified, each variable after
+#' the first serves as tie-breaker for the previous one.}
+#' \item{\code{impute_knn} The predictors are used to determine Gower's distance
+#' between records (see \code{\link[gower]{gower_topn}}). This may include the
+#' variables to be imputed.}.
+#' \item{\code{impute_pmm}} Predictive mean matching. The
+#'  \code{MODEL_SPECIFICATION} is passed through to the \code{predictor}
+#'  function.
+#'} 
+#' 
+#' 
+#' If grouping variables are specified, the data set is split according to the
+#' values of those variables, and model estimation and imputation occur
+#' independently for each group.
+#' 
+#' Grouping using \code{dplyr::group_by} is also supported. If groups are 
+#' defined in both the formula and using \code{dplyr::group_by}, the data is 
+#' grouped by the union of grouping variables. Any missing value in one of the 
+#' grouping variables results in an error.
+#'  
 #' @section Using the VIM backend:
 #'
 #' The \href{ https://CRAN.R-project.org/package=VIM}{VIM} package has efficient
@@ -83,7 +110,7 @@
 #'  \item{\code{impute_knn} is mapped to \code{VIM::kNN} where imputed variables
 #'  are passed to \code{variable}, predictor variables are passed to \code{dist_var}
 #'  and grouping variables are ignored with a message. 
-#'  Extra arguments in \code{...} are passed to \code{VIM::hotdeck} as well.
+#'  Extra arguments in \code{...} are passed to \code{VIM::kNN} as well.
 #'  Argument \code{pool} is ignored.
 #'  Note that simputation  adheres stricktly to the Gower's original
 #'  definition of the distance measure, while \pkg{VIM} uses a generalized variant
@@ -98,9 +125,8 @@
 #' 
 #' 
 #' 
-#'
-#' @rdname impute_hd
-#' 
+#' @name impute_hotdeck
+#' @rdname impute_hotdeck
 #' @export
 impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariate")
                        , prob, backend=getOption("simputation.hdbackend",default=c("simputation","VIM"))
@@ -221,8 +247,10 @@ hd_vim <- function(data, variable, ord_var, domain_var, imp_var=FALSE,...){
 # SEQUENTIAL HOTDECK IMPUTATION
 
 
-#' @rdname impute_hd
-#' @param order Last Observation Carried Forward or Next Observarion Carried Backward
+#' @rdname impute_hotdeck
+#' @param order \code{[character]} Last Observation Carried Forward or Next
+#'   Observarion Carried Backward. Only for \code{backend="simputation"}
+#' 
 #' @export
 impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariate")
                        , order=c("locf","nocb")
@@ -354,10 +382,11 @@ multi_shd <- function(x){
 # PMM IMPUTATION
 
 
-#' @rdname impute_hd
+#' @rdname impute_hotdeck
 #' @param predictor \code{[function]} Imputation to use for predictive part in
 #'   predictive mean matching. Any of the \code{impute_} functions of this
 #'   package (it makes no sense to use a hot-deck imputation).
+#' 
 #' @export
 impute_pmm <- function(dat, formula, predictor=impute_lm
   , pool=c('complete','univariate','multivariate'), ...){
@@ -447,8 +476,9 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
 
 
 
-#' @rdname impute_hd
-#' @param k Number of nearest neighbours to draw the donor from.
+#' @rdname impute_hotdeck
+#' @param k \code{[numeric]} Number of nearest neighbours to draw the donor from.
+#' 
 #' @export
 impute_knn <- function(dat, formula
   , pool=c("complete","univariate","multivariate")

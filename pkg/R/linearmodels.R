@@ -28,7 +28,7 @@
 #' \item{\code{\link[Amelia]{amelia}} for \code{impute_emb} or \code{impute_em}}
 #' }
 #' 
-#' @section Specifying the imputation model:
+#' @section Model specification:
 #' 
 #' Formulas are of the form
 #' 
