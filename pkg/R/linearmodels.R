@@ -1,7 +1,9 @@
 
-#' (Robust) linear regression imputation
+#' (Robust) Linear Regression Imputation
 #'
-#' Use to fit and impute missing data.
+#' Regression imputation methods including linear regression, robust 
+#' linear regression with \eqn{M}-estimators, regularized regression
+#' with lasso/elasticnet/ridge regression.
 #'
 #' @param dat \code{[data.frame]}, with variables to be imputed and their
 #'   predictors.
@@ -21,11 +23,6 @@
 #' \item{\code{\link[stats]{lm}} for \code{impute_lm}}
 #' \item{\code{\link[MASS]{rlm}} for \code{impute_rlm}}
 #' \item{\code{\link[glmnet]{glmnet}} for \code{impute_en}}
-#' \item{\code{\link[base]{order}} for \code{impute_shd}} 
-#' \item{The \code{predictor} for \code{impute_pmm}}
-#' \item{\code{\link[randomForest]{randomForest}} for \code{impute_rf}}
-#' \item{\code{\link[missForest]{missForest}} for \code{impute_mf}}
-#' \item{\code{\link[Amelia]{amelia}} for \code{impute_emb} or \code{impute_em}}
 #' }
 #' 
 #' @section Model specification:
@@ -35,12 +32,12 @@
 #' \code{IMPUTED_VARIABLES ~ MODEL_SPECIFICATION [ | GROUPING_VARIABLES ] }
 #' 
 #' The left-hand-side of the formula object lists the variable or variables to 
-#' be imputed. The interpretation of the independent variables on the
-#' right-hand-side depends on the underlying imputation model. If grouping
-#' variables are specified, the data set is split according to the values of
-#' those variables, and model estimation and imputation occur independently for
-#' each group.
+#' be imputed. The right-hand side excluding the optional \code{GROUPING_VARIABLES} 
+#' model specification for the underlying predictor.
 #' 
+#' If grouping variables are specified, the data set is split according to the
+#' values of those variables, and model estimation and imputation occur
+#' independently for each group.
 #' 
 #' Grouping using \code{dplyr::group_by} is also supported. If groups are 
 #' defined in both the formula and using \code{dplyr::group_by}, the data is 
@@ -49,21 +46,48 @@
 #' 
 #' Grouping is ignored for \code{impute_const}.
 #' 
-#' @section Details:
+#' @section Methodology:
 #' 
-#' The functions are designed to be robust against failing imputations. This means that
-#' rather than emitting an error, functions show the following behaviour.
+#' \bold{Linear regression model imputation} with \code{impute_lm} can be used 
+#' to impute numerical variables based on numerical and/or categorical 
+#' predictors. Several common imputation methods, including ratio and (group)
+#' mean imputation can be expressed this way. See \code{\link[stats]{lm}} for
+#' details on possible model specification.
 #' 
-#' \itemize{
-#' \item{If a value cannot be imputed because one of its predictors is missing, the value will
-#' remain missing after imputation.}
+#' \bold{Robust linear regression through M-estimation} with
+#' \code{impute_rlm} can be used to impute numerical variables employing
+#' numerical and/or categorical predictors. In \eqn{M}-estimation, the
+#' minimization of the squares of residuals is replaced with an alternative
+#' convex function of the residuals. A concise online description
+#' of \eqn{M}-estimation can be found 
+#' \href{http://research.microsoft.com/en-us/um/people/zhang/INRIA/Publis/Tutorial-Estim/node24.html#SECTION000104000000000000000}{here}.
+#' Also see e.g.  Huber (1981).
 #' 
-#' \item{If a model cannot be fitted, e.g. because the imputed model is missing, a warning
-#' is emitted and for that variable no imputation will take place.}
-#' }
+#' \bold{Lasso/elastic net/ridge regression imputation} with \code{impute_en} 
+#' can be used to impute numerical variables employing numerical and/or 
+#' categorical predictors. For this method, the regression coefficients are 
+#' found by minimizing the least sum of squares of residuals augmented with a 
+#' penalty term depending on the size of the coefficients. For lasso regression 
+#' (Tibshirani, 1996), the penalty term is the sum of squares of the 
+#' coefficients. For ridge regression (Hoerl and Kennard, 1970), the penalty
+#' term is the sum of absolute values of the coefficients. Elasticnet regression
+#' (Zou and Hastie, 2010) allows switching from lasso to ridge by penalizing by
+#' a weighted sum of the sum-of-squares and sum of absolute values term.
+#' 
 #'
-#' 
-#' 
+#' @references 
+#' Huber, P.J., 2011. Robust statistics (pp. 1248-1251). Springer Berlin Heidelberg.
+#'
+#' Hoerl, A.E. and Kennard, R.W., 1970. Ridge regression: Biased estimation for
+#' nonorthogonal problems. Technometrics, 12(1), pp.55-67.
+#'
+#' Tibshirani, R., 1996. Regression shrinkage and selection via the lasso.
+#' Journal of the Royal Statistical Society. Series B (Methodological),
+#' pp.267-288.
+#'   
+#' Zou, H. and Hastie, T., 2005. Regularization and variable selection via the
+#' elastic net. Journal of the Royal Statistical Society: Series B (Statistical
+#' Methodology), 67(2), pp.301-320.
 #' 
 #' @seealso 
 #' \href{../doc/intro.html}{Getting started with simputation}, 
