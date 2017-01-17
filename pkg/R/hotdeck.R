@@ -75,7 +75,34 @@
 #' defined in both the formula and using \code{dplyr::group_by}, the data is 
 #' grouped by the union of grouping variables. Any missing value in one of the 
 #' grouping variables results in an error.
-#'  
+#' 
+#' @section Methodology:
+#' 
+#' \bold{Random hot deck imputation} with \code{impute_rhd} can be applied to
+#' numeric, categorical or mixed data. A missing value is copied from a sampled
+#' record. Optionally samples are taken within a group, or with non-uniform
+#' sampling probabilities. See Andridge and Little (2010) for an overview
+#' of hot deck imputation methods.
+#' 
+#' \bold{Sequential hot deck imputation} with \code{impute_rhd} can be applied
+#' to numeric, categorical, or mixed data. The dataset is sorted using the
+#' `predictor variables'. Missing values or combinations thereof are copied
+#' from the previous record where the value(s) are available in the case
+#' of LOCF and from the next record in the case of NOCF. 
+#'   
+#' \bold{Predictive mean matching} with \code{impute_pmm} can be applied to
+#' numeric data. Missing values or combinations thereof are first imputed using
+#' a predictive model. Next, these predictions are replaced with observed
+#' (combinations of) values nearest to the prediction. The nearest value is the
+#' observed value with the smallest absolute deviation from the prediction.
+#' 
+#' \bold{K-nearest neighbour imputation} with \code{impute_knn} can be applied 
+#' to numeric, categorical, or mixed data. For each record containing missing 
+#' values, the \eqn{k} most similar completed records are determined based on
+#' Gower's (1977) similarity coefficient. From these records the actual donor is
+#' sampled.
+#' 
+#' 
 #' @section Using the VIM backend:
 #'
 #' The \href{ https://CRAN.R-project.org/package=VIM}{VIM} package has efficient
@@ -123,7 +150,12 @@
 #' be turned on again by setting \code{imp_var=TRUE}.
 #' 
 #' 
+#' @references 
+#' Andridge, R.R. and Little, R.J., 2010. A review of hot deck imputation for
+#' survey non‐response. International statistical review, 78(1), pp.40-64.
 #' 
+#' Gower, J.C., 1971. A general coefficient of similarity and some of its
+#' properties. Biometrics, pp.857-871.
 #' 
 #' @name impute_hotdeck
 #' @rdname impute_hotdeck
