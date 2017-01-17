@@ -116,24 +116,6 @@ rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), 
   dat
 }
 
-#' @rdname impute_tree
-#' 
-#' @export
-impute_mf <- function(dat, formula,...){
-  stopifnot(inherits(formula,"formula"))
-  if ( not_installed("missForest") ) return(dat)
-  imputed <- get_imputed(formula,dat)
-  predictors <- get_predictors(formula, dat)
-  vars <- unique(c(imputed,predictors))
-  imp <- tryCatch(missForest::missForest(dat[vars])[[1]], error=function(e){
-    warnf("Could not execute missForest::missForest: %s\n Returning original data"
-         , e$message)
-    dat
-  })
-  dat[imputed] <- imp[imputed]
-  dat
-}
-
 
 
 

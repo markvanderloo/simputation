@@ -1,10 +1,38 @@
 
 
-#' @rdname impute_lm
+#' Multivariate, model-based imputation
+#' 
+#' Models that simultaneously optimize imptuation of multiple variables.
+#' Methods include imputation based on EM-estimation of multivariate normal
+#' parameters, imputation based on iterative Random Forest estimates and
+#' stochastic imptuation based on bootstrapped EM-estimatin of multivariate
+#' normal parameters.
+#' 
+#' @rdname impute_multivariate
+#' @name impute_multivariate
+#' 
+#' @param dat \code{[data.frame]} with variables to be imputed.
+#' @param formula \code{[formula]} imputation model description 
+#' @param verbose \code{[numeric]} Control amount of output printed to screen.
+#' Higher values mean more output. 
+#' \itemize{
+#' \item{0 or a number \eqn{\geq 1} for \code{impute_em}}
+#' \item{0, 1, or 2 for \code{impute_emb}}
+#' }
+#'    
+#' @param ... Options passed to 
+#' \itemize{
+#' \item{\code{\link[norm:em.norm]{norm::em.norm}} for \code{impute_em} }
+#' \item{\code{\link[Amelia:amelia]{Amelia::amelia}} for \code{impute_emb}}
+#' \item{\code{\link[missForest:missForest]{missForest::missForest}} for \code{impute_mf}}
+#' }
+#'
+#' @section Model specification:
+#'   
 #' 
 #' @export
-impute_em <- function(dat, formula, p2s=0,...){
-  if ( not_installed("Amelia") ) return(dat)
+impute_em <- function(dat, formula, verbose=0,...){
+  if ( not_installed("norm") ) return(dat)
   grp <- groups(dat,formula)
   frm <- remove_groups(formula)
   prd <- get_predictors(frm, dat)
@@ -12,23 +40,23 @@ impute_em <- function(dat, formula, p2s=0,...){
   imp <- unique(c(imp, prd))
   
   imp_work <- function(dd){
-    d <- dd[imp]
-    # We need this ugly escape since Amelia sends errors when passed a
-    # complete dataset.
+    d <- as.matrix(dd[imp])
     if (!anyNA(d)) return(dd)
     # Ok, let's get to work
-    out <- tryCatch({Amelia::amelia(d, m=1, p2s=p2s, boot.type="none", ...)}
+    s <- norm::prelim.norm(d)
+    theta <- tryCatch(norm::em.norm(s,showits=(verbose>0),...)
       , error = function(e){
-        warnf("Amelia::amelia stopped with message\n %s\n Returning original data"
-              , e$message)
+        warnf("norm::em.norm stopped with message\n %s\n Returning original data")
         FALSE
-    }) # end tryCatch
-    # if Amelia stopped, return data untouched
-    if (identical(out,FALSE)) return(dd)
+    })
+    # if em.norm stopped, return data untouched
+    if (identical(theta,FALSE)) return(dd)
     
     # extract parameters (computed on z-transformed columns)
-    mu_sc <- out$mu
-    cov_sc <- out$covMatrices[,,1]
+    # see code of norm::getparam.norm for extraction
+    mu_sc <- theta[s$psi[1, 2:(s$p + 1)]] 
+    cov_sc <- theta[s$psi[2:(s$p + 1), 2:(s$p + 1)]]
+    cov_sc <- matrix(cov_sc, s$p, s$p)
     
     # z-transform columns for imputation
     x <- d
@@ -50,7 +78,7 @@ impute_em <- function(dat, formula, p2s=0,...){
       x_[i_miss] <- mu_miss + Smo%*%solve(Soo,(x_obs - mu_obs))
       x_
     })
-    dd[imp] <- as.data.frame(unscale(t(a),mu=mu_x,sd=sd_x))
+    dd[imp] <- unscale(t(a),mu=mu_x,sd=sd_x)
     dd
   }
   
@@ -69,12 +97,10 @@ unscale <- function(x,mu,sd){
 
 
 
-#' @rdname impute_lm
-#' @param p2s verbosity of \code{\link[Amelia]{amelia}}: \code{0}: no output,
-#'  \code{1} print iterations to screen.
+#' @rdname impute_multivariate
 #'
 #' @export
-impute_emb <- function(dat, formula, p2s=0, ...){
+impute_emb <- function(dat, formula, verbose=0, ...){
   if ( not_installed("Amelia") ) return(dat)
   grp <- groups(dat, formula)
   frm <- remove_groups(formula)
@@ -87,7 +113,7 @@ impute_emb <- function(dat, formula, p2s=0, ...){
     # workaround since amelia errors when no missings present
     if (!anyNA(d)) return(dd)
     # actual work
-    out <- tryCatch(Amelia::amelia(d, m=1, p2s=p2s, ...)$imputations[[1]]
+    out <- tryCatch(Amelia::amelia(d, m=1, p2s=verbose, ...)$imputations[[1]]
       , error = function(e){
        warnf("Amelia::amelia stopped with message\n %s\n Returning original data"
           , e$message
@@ -101,4 +127,22 @@ impute_emb <- function(dat, formula, p2s=0, ...){
   
   do_by(dat, grp, imp_work)
 
+}
+
+#' @rdname impute_multivariate
+#' 
+#' @export
+impute_mf <- function(dat, formula,...){
+  stopifnot(inherits(formula,"formula"))
+  if ( not_installed("missForest") ) return(dat)
+  imputed <- get_imputed(formula,dat)
+  predictors <- get_predictors(formula, dat,...)
+  vars <- unique(c(imputed,predictors))
+  imp <- tryCatch(missForest::missForest(dat[vars])[[1]], error=function(e){
+    warnf("Could not execute missForest::missForest: %s\n Returning original data"
+         , e$message)
+    dat
+  })
+  dat[imputed] <- imp[imputed]
+  dat
 }
