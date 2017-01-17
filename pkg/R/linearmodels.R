@@ -62,55 +62,9 @@
 #' is emitted and for that variable no imputation will take place.}
 #' }
 #'
-#' @section Missings in training data:
-#' 
-#' For model-based imputation, including those based on (robust) linear models, 
-#' cart models and random forests, there is an option called \code{na_action}
-#' that specifies what to do with missings in training data. The default action
-#' is to train models on data where both the predicted and predictor variables
-#' are available. Some of the interesting options are
-#' 
-#' \itemize{
-#' \item{\code{\link[stats]{na.omit}}: omit cases where predictor or predicted
-#'   is missing. This is the default.} 
-#'   \item{\code{rpart::\link[rpart]{na.rpart}}: omit cases where the predicted is
-#'   missing but keep cases where one or more predictors are missing. Relevant
-#'   for \code{impute_cart}}
-#' \item{\code{\link[randomForest]{na.roughfix}} Temporarily impute all
-#'   predictors and predicted with the column median (for numeric data) or the
-#'   mode (for categorical data) in order to fit the model. (re-exported from 
-#'   \pkg{randomForest}) }
-#' }
 #' 
 #' 
 #' 
-#' @section Model descriptions:
-#' If external packages are used to generate the model predictions, these are
-#' given in brackets (with links). The \code{...} arguments are passed to
-#' those functions when training the imputation model.
-#' 
-#' \tabular{ll}{
-#' \bold{Model} \tab \bold{description}\cr
-#' \code{impute_lm} \tab Standard linear model (\code{\link[stats:lm]{stats::lm}})\cr
-#' \code{impute_rlm} \tab Robust linear model based on \eqn{M}-estimation. (\code{\link[MASS:rlm]{MASS::rlm}}).\cr
-#' \code{impute_en} \tab Elasticnet or lasso regression (\code{\link[glmnet:glmnet]{glmnet::glmnet}}).\cr
-#' \code{impute_em} \tab Estimate parameters of multivariat Normal distribution with EM algorithm and impute expected values.\cr
-#' \code{impute_emb} \tab Stochastic imputation based on bootstrapped EM
-#'   estimation of multivariate normal parameters.
-#'   (\code{\link[Amelia:amelia]{Amelia::amelia}})\cr
-#' \code{impute_median} \tab Median imputation. Predictors are treated
-#'    as grouping variables for computing medians.\cr
-#' \code{impute_const} \tab Impute a constant value \cr
-#' \code{impute_proxy} \tab Copy a value from the predictor variable.\cr
-#' \code{impute_rhd} \tab Random hot deck. Predictors are used to group the donors.\cr
-#' \code{impute_shd} \tab Sequential hot deck. Predictors sort the data (use \code{~ 1} for no sorting).\cr
-#' \code{impute_knn} \tab k-nearest neighbour imputation. Predictors are used to determine Gower's distance.\cr
-#' \code{impute_pmm} \tab Predictive mean matching. \cr
-#' \code{impute_cart} \tab Classification and regression tree (\code{\link[rpart:rpart]{rpart::rpart}}).\cr
-#' \code{impute_rf} \tab Random forest (\code{\link[randomForest:randomForest]{randomForest::randomForest}}).\cr
-#' \code{impute_mf} \tab missForest (\code{\link[missForest:missForest]{missForest::missForest}}).
-#' }
-#'
 #' @seealso 
 #' \href{../doc/intro.html}{Getting started with simputation}, 
 #' 
@@ -329,41 +283,6 @@ impute_median <- function(dat, formula, add_residual = c("none","observed","norm
 }
 
 
-
-
-
-#' @rdname impute_lm
-#' @export
-impute_proxy <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
-  stopifnot(inherits(formula,"formula"))
-  add_residual <- match.arg(add_residual)
-  groups <- groups(formula, dat = dat)
-  predicted <- get_imputed(formula,names(dat))
-  
-  proxy <- function(d){
-    v <- eval(formula[[3]],envir=d)
-    if (length(v)==1) v <- rep(v,nrow(d))
-    v
-  } 
-  
-  imp_val <- if (has_groups(formula)){
-    formula <- remove_groups(formula)
-    unsplit(lapply(split(dat, dat[groups]), proxy), dat[groups])
-  } else {
-    proxy(dat)
-  }
-  if(length(imp_val) != nrow(dat) ){
-    warnf("Right-hand-side of\n %s\n must evaluate to vector of length %d or 1. Returning original data"
-          , deparse(formula), nrow(dat))
-    return(dat)
-  }
-  for ( p in predicted){
-    ina <- is.na(dat[,p])
-    dat[ina,p] <- imp_val[ina] + 
-      get_res(sum(ina), imp_val[!ina] - dat[!ina,p], type=add_residual)
-  }
-  dat
-}
 
 
 

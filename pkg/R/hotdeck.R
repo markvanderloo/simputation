@@ -152,10 +152,10 @@
 #' 
 #' @references 
 #' Andridge, R.R. and Little, R.J., 2010. A review of hot deck imputation for
-#' survey non‐response. International statistical review, 78(1), pp.40-64.
+#' survey non-response. International statistical review, 78(1), pp.40-64.
 #' 
 #' Gower, J.C., 1971. A general coefficient of similarity and some of its
-#' properties. Biometrics, pp.857-871.
+#' properties. Biometrics, pp.857--871.
 #' 
 #' @name impute_hotdeck
 #' @rdname impute_hotdeck
