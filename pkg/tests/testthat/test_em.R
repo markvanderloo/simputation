@@ -1,7 +1,7 @@
 
 context("EM imputation")
 
-if (require("norm",quietly = TRUE)){
+if (requireNamespace("norm",quietly = TRUE)){
   test_that("EM imputation",{
     x <- iris[-5]
     x[1:3,1] <- x[5:7,2] <- NA
@@ -21,7 +21,7 @@ if (require("norm",quietly = TRUE)){
   })
 }
 
-if (require("Amelia",quietly=TRUE)){
+if (requireNamespace("Amelia",quietly=TRUE)){
   test_that("EMB imputation", {
     dd <- data.frame( 
       x = rnorm(20), y=rnorm(20),z=rnorm(20)
@@ -29,7 +29,8 @@ if (require("Amelia",quietly=TRUE)){
     dd[1:3,1] <- dd[4:6,2] <- dd[7:9,3] <- NA
     d1 <- impute_emb(dd, x ~ y)
     expect_equal(sum(is.na(d1[,3])),3)
-    expect_equal(sum(is.na(d1[,1:2])),0)
+    expect_equal(sum(is.na(d1[,1])),0)
+    expect_equal(sum(is.na(d1[,2])),3)
     d1 <- impute_emb(dd,  ~ x + y)
     expect_equal(sum(is.na(d1[,3])),3)
     expect_equal(sum(is.na(d1[,1:2])),0)

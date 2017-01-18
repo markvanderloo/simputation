@@ -156,8 +156,8 @@ impute_emb <- function(dat, formula, verbose=0, ...){
   grp <- groups(dat, formula)
   frm <- remove_groups(formula)
   prd <- get_predictors(frm, dat)
-  imp <- get_imputed(formula, dat)
-  imp <- unique(c(imp, prd))
+  im1 <- get_imputed(formula, dat)
+  imp <- unique(c(im1, prd))
 
   imp_work <- function(dd){
     d <- dd[imp]
@@ -176,8 +176,14 @@ impute_emb <- function(dat, formula, verbose=0, ...){
     dd
   }
   
-  do_by(dat, grp, imp_work)
-
+  a <- do_by(dat, grp, imp_work)
+  if (length(im1) == 0){
+    a
+  } else {
+    dat[im1] <- a[im1]
+    dat
+  }
+  
 }
 
 #' @rdname impute_multivariate
