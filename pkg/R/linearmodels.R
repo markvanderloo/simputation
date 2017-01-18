@@ -238,73 +238,8 @@ lmwork <- function(dat, formula, add_residual, fun, na.action, ...){
 }
 
 
-#' @rdname impute_lm
-#' @export
-impute_const <- function(dat, formula, add_residual = c("none","observed","normal"),...){
-  stopifnot(inherits(formula,"formula"))
-  add_residual <- match.arg(add_residual)
-  formula <- remove_groups(formula)
-  if (length(formula[[3]]) != 1)
-    stop(sprintf("Expected constant, got '%s'",deparse(formula[[3]])))
-  const <- as.numeric(deparse(formula[[3]]))
-  
-  if (is.na(const)) const <- deparse(formula[[3]])
-  predicted <- get_imputed(formula, dat)
-  for ( p in predicted ){
-    ina <- is.na(dat[p])
-    nmiss <- sum(ina)
-    # prevent conversion of constant to NA from popping up: we just replace NA 
-    # with NA in that case.
-    tryCatch(
-      dat[ina,p] <- if ( add_residual == "none" ){
-        const
-      } else if (nmiss == 0){
-        warning("All values missing, so no random residuals added")
-        const
-      } else {
-        const + get_res(nmiss=nmiss, residuals=const-dat[!ina,p], type=add_residual)
-      }
-      , warning=function(w){}
-    )
-  }
-  dat
-}
 
 
-
-#' @rdname impute_lm
-#' @export
-impute_median <- function(dat, formula, add_residual = c("none","observed","normal"), ...){
-  stopifnot(inherits(formula,"formula"))
-  add_residual <- match.arg(add_residual)
-  
-  predicted <- get_imputed(formula, dat)
-  predicted <- predicted[sapply(dat[predicted], is.numeric)]
-  predictors <- groups(dat,formula)
-  formula <- remove_groups(formula)
-  predictors <- unique( c(predictors, get_predictors(formula, dat, one_ok=TRUE)) )
-  
-  # compute formula values
-  by <- if (length(predictors) == 0) list(rep(1,nrow(dat))) else as.list(dat[predictors])
-  # silence the warning about producing NA's (give specific warning later)
-  medians <- withCallingHandlers(
-    stats::aggregate(dat[predicted],by=by, FUN=stats::median, na.rm=TRUE)
-    , warning=function(w) invokeRestart("muffleWarning") 
-  )
-  # create nrow(data) X npredictors data.frame with formula values.
-  imp <- if (length(predictors) == 0) 
-    cbind(by[[1]], medians) # about 75 times faster than merge
-  else 
-    merge(dat[predictors], medians, all.x=TRUE, all.y=FALSE)
-  
-  for ( p in predicted ){
-    if (is.na(medians[1,p]))
-      warning(sprintf("Could not compute predictor for %s, imputing NA",p))
-    ina <- is.na(dat[p])
-    dat[ina,p] <- imp[ina,p] + get_res(nmiss=sum(ina), residuals=imp[!ina,p]-dat[!ina,p], type=add_residual)
-  }
-  dat
-}
 
 
 

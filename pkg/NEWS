@@ -1,17 +1,21 @@
 version 0.2.1
-- added support for ridge/elasticnet/lasso regression (using 'glmnet')
-- added support for missForest imputation (using 'missForest')
-- added support for imputation using EM-estimated parameters (using 'Amelia')
-- added support for single EMB imputation (using 'Amelia')
-- impute_proxy now supports transformations in the rhs of formula.
-- new functions 'simputation_capabilities' and 'simputation_suggests'
+- Added support for ridge/elasticnet/lasso regression (using 'glmnet')
+- Added support for missForest imputation (using 'missForest')
+- Added support for imputation using EM-estimated parameters (using 'norm')
+- Added support for single stochastic EMB imputation (using 'Amelia')
+- 'impute_proxy' now supports transformations in the rhs of formula.
+- 'impute_median' gains 'type' argument to specify algorithm for median computation.
+- New functions 'simputation_capabilities' and 'simputation_suggests'
   detect which packages supporting imputation methods are available.
-- renamed 'na.action' -> 'na_action' for consistency within simputation.
-- default 'na_action' for 'impute_cart' is now 'na.rpart'
-- dependencies on larger packages (randomForest, glmnet) moved to 'suggests'
+- Renamed 'na.action' -> 'na_action' for consistency within simputation.
+- Default 'na_action' for 'impute_cart' is now 'na.rpart'
+- Default 'na_action' for 'impute_rf' is not 'na.roughfix'
+- Complete overhaul of function documentation. Now set up systematically
+  with synopsis of methodology where relevant.
+- Dependencies on larger packages (randomForest, glmnet) moved to 'Suggests'
 - Fix in 'impute_rf': needed workaround for bug in randomForest 4.6.12 
   (formulas like Y ~ . - X not handled correctly by predict.randomForest)
-- bugfix in 'impute_pmm': argument 'predictor' was ignored.
+- Bugfix in 'impute_pmm': argument 'predictor' was ignored.
 
 version 0.2.0
 - Added na.action option for model-based imputation (thanks to Soogeun Park)
