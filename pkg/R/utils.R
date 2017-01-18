@@ -120,24 +120,6 @@ iapply <- function(X, MARGIN, FUN, ...){
   a
 }
 
-# give 'split' reasonable behaviour
-isplit <- function(x,f,drop=FALSE,...){
-  if(length(f)==0){ 
-    list(x)
-  } else {
-    split(x=x, f=f, drop=drop, ...)
-  }
-}
-
-# give 'unsplit' reasonable behaviour
-iunsplit <- function(value, f, drop=FALSE){
-  if (length(f)==0){
-    value[[1]]
-  } else {
-    unsplit(value=value, f=f, drop=drop)
-  }
-}
-
 # General layout of imputation spec is
 # [imputed vars] ~ [predictive vars] [| [grouping vars]]
 

@@ -165,7 +165,7 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
                        , ...){
   stopifnot(inherits(formula,"formula"))
   backend <- match.arg(backend, choices = c("simputation","VIM"))
-
+  at <- attributes(dat)
   predicted <- get_imputed(formula, dat)
   grps <- groups(dat,formula)
   formula <- remove_groups(formula)
@@ -195,12 +195,12 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
   # ugly construction, but fast.
   prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
   idat$PROB..TMP <- prob
-    
+
   spl <- if (length(predictors) > 0) dat[predictors] else data.frame(split=rep(1,nrow(dat)))
   
   # split-apply-combine, the base-R way.
   dat[predicted] <- unsplit( lapply( split(idat, spl), rhd ), spl)[predicted]
-
+  attributes(dat) <- at
   dat
 }
 
@@ -422,11 +422,11 @@ multi_shd <- function(x){
 #' @export
 impute_pmm <- function(dat, formula, predictor=impute_lm
   , pool=c('complete','univariate','multivariate'), ...){
-
+  
   # input check
   stopifnot(inherits(formula,"formula"))
   pool <- match.arg(pool)
-  
+
   # generate predictions by imputing with the 'predictor' function.
   do_by(dat, groups(dat,formula), .fun=pmm_work
     , predictor = predictor
