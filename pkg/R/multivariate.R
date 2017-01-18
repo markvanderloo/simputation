@@ -87,17 +87,29 @@ impute_em <- function(dat, formula, verbose=0,...){
   grp <- groups(dat,formula)
   frm <- remove_groups(formula)
   prd <- get_predictors(frm, dat)
-  imp <- get_imputed(formula, dat)
-  imp <- unique(c(imp, prd))
+  im1 <- get_imputed(formula, dat)
+  imp <- unique(c(im1, prd))
+  
+  if ( !all(sapply(dat[imp],is.numeric)) ){
+    warnf("Cannot impute non-numeric variables. Returning original data")
+    return(dat)
+  }
   
   imp_work <- function(dd){
     d <- as.matrix(dd[imp])
     if (!anyNA(d)) return(dd)
     # Ok, let's get to work
-    s <- norm::prelim.norm(d)
+    s <- tryCatch(norm::prelim.norm(d)
+      , error = function(e){
+       warnf("norm::prelim.norm stopped with message\n %s\n Returning original data"
+             , e$message)
+        FALSE
+      })
+    if (identical(s,FALSE)) return(dd)
     theta <- tryCatch(norm::em.norm(s,showits=(verbose>0),...)
       , error = function(e){
-        warnf("norm::em.norm stopped with message\n %s\n Returning original data")
+        warnf("norm::em.norm stopped with message\n %s\n Returning original data"
+              ,e$message)
         FALSE
     })
     # if em.norm stopped, return data untouched
@@ -133,8 +145,13 @@ impute_em <- function(dat, formula, verbose=0,...){
     dd
   }
   
-  do_by(dat=dat, groups=grp, .fun = imp_work)  
-
+  a <- do_by(dat=dat, groups=grp, .fun = imp_work)  
+  if (length(im1) == 0){
+    a
+  } else {
+    dat[im1] <- a[im1]
+    dat
+  }
 }
 
 # inverse z-transform, x: data.frame or matrix
@@ -195,11 +212,15 @@ impute_mf <- function(dat, formula,...){
   imputed <- get_imputed(formula,dat)
   predictors <- get_predictors(formula, dat,...)
   vars <- unique(c(imputed,predictors))
-  imp <- tryCatch(missForest::missForest(dat[vars])[[1]], error=function(e){
+  imp <- tryCatch(missForest::missForest(dat[vars],...)[[1]], error=function(e){
     warnf("Could not execute missForest::missForest: %s\n Returning original data"
          , e$message)
     dat
   })
-  dat[imputed] <- imp[imputed]
+  if ( length(imputed) == 0 ){
+    dat[vars] <- imp[vars]
+  } else {
+    dat[imputed] <- imp[imputed]
+  }
   dat
 }

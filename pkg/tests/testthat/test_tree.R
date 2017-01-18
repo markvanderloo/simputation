@@ -56,15 +56,6 @@ if (requireNamespace("randomForest",quietly = TRUE)){
     
   })
 }
-
-if (requireNamespace("missForest",quietly=TRUE)){
-  test_that("missForest imputation",{
-    dat <- iris
-    dat[1:3,1] <- dat[4:7,5] <- NA 
-    expect_true(!any(is.na(impute_mf(dat, Species + Sepal.Length ~ Sepal.Width))))
-  })
-}
-
 test_that("grouped imputation",{
   dat <- data.frame(
     x = 1:100
