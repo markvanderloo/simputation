@@ -23,7 +23,6 @@
 #' @param ... Options passed to 
 #' \itemize{
 #' \item{\code{\link[norm:em.norm]{norm::em.norm}} for \code{impute_em} }
-#' \item{\code{\link[Amelia:amelia]{Amelia::amelia}} for \code{impute_emb}}
 #' \item{\code{\link[missForest:missForest]{missForest::missForest}} for \code{impute_mf}}
 #' }
 #'
@@ -55,13 +54,6 @@
 #' of Dempster Laird and Rubin (1977). The imputations are the expected values
 #' for missing values, conditional on the value of the estimated parameters.
 #' 
-#' \bold{EMB imputation} with \code{impute_emb} works only for numerical 
-#' variables. It is based on the algorithm of Honaker, King and Blackwell
-#' (2011). Bootstrap samples are drawn from the input dataset and for each
-#' sample the EM algorithm is executed to estimate multivariate normal
-#' parameters. From this set of parameters, one is sampled uniformly. 
-#' Imputations are drawn from the distribution with the sampled parameter, 
-#' conditional on observed values.
 #' 
 #' \bold{Multivariate Random Forest imputation} with \code{impute_mf} works for
 #' numerical, categorical or mixed data types. It is based on the algorithm
@@ -74,9 +66,6 @@
 #' Dempster, Arthur P., Nan M. Laird, and Donald B. Rubin. "Maximum likelihood
 #' from incomplete data via the EM algorithm." Journal of the royal statistical
 #' society. Series B (methodological) (1977): 1-38.
-#' 
-#' Honaker, J., King, G. and Blackwell, M., 2011. Amelia II: A program for
-#' missing data. Journal of statistical software, 45(7), pp.1-47.
 #' 
 #' Stekhoven, D.J. and Buehlmann, P., 2012. MissForest---non-parametric missing 
 #' value imputation for mixed-type data. Bioinformatics, 28(1), pp.112-118.
@@ -163,45 +152,6 @@ unscale <- function(x,mu,sd){
 }
 
 
-
-
-#' @rdname impute_multivariate
-#'
-#' @export
-impute_emb <- function(dat, formula, verbose=0, ...){
-  if ( not_installed("Amelia") ) return(dat)
-  grp <- groups(dat, formula)
-  frm <- remove_groups(formula)
-  prd <- get_predictors(frm, dat)
-  im1 <- get_imputed(formula, dat)
-  imp <- unique(c(im1, prd))
-
-  imp_work <- function(dd){
-    d <- dd[imp]
-    # workaround since amelia errors when no missings present
-    if (!anyNA(d)) return(dd)
-    # actual work
-    out <- tryCatch(Amelia::amelia(d, m=1, p2s=verbose, ...)$imputations[[1]]
-      , error = function(e){
-       warnf("Amelia::amelia stopped with message\n %s\n Returning original data"
-          , e$message
-        ) # end tryCatch
-      FALSE
-    })
-    if (identical(out,FALSE)) return(dd)
-    dd[imp] <- out
-    dd
-  }
-  
-  a <- do_by(dat, grp, imp_work)
-  if (length(im1) == 0){
-    a
-  } else {
-    dat[im1] <- a[im1]
-    dat
-  }
-  
-}
 
 #' @rdname impute_multivariate
 #' 
