@@ -27,6 +27,8 @@ imputation methodology is supported.
     - ridge/elasticnet/lasso regression
     - CART models (decision trees)
     - Random forest
+- Multivariate imputation
+    - Imputation based on the expectation-maximization algorithm
     - missForest (=iterative random forest imputation)
 - Donor imputation (including various donor pool specifications)
     - k-nearest neigbour (based on [gower](https://cran.r-project.org/package=gower)'s distance)
@@ -35,7 +37,8 @@ imputation methodology is supported.
     - Predictive mean matching
 - Other
     - (groupwise) median imputation (optional random residual)
-    - Proxy imputation (copy from other variable) 
+    - Proxy imputation: copy another variable or use a simple transformation
+      to compute imputed values.
 
 
 ### Installation
@@ -57,18 +60,19 @@ an overview of what packages are used.
 ```{r,echo=FALSE}
 knitr::kable(
   data.frame(
-      `function` = c("impute_rlm"    ,"impute_en"              , "impute_cart", "impute_rf", "impute_rhd","impute_shd","impute_knn")
-    , model = c("M-estimation", "ridge/elasticnet/lasso", "CART"       , "random forest","random hot deck","sequential hot deck","k nearest neighbours")
-    , package = c("MASS"      ,"glmnet"                 , "rpart"      , "randomForest","VIM (optional)","VIM (optional)","VIM (optional)")
-    , R.recommended = c("yes","no","yes","no","no","no","no")
+      `function` = c("impute_rlm"    ,"impute_en"              , "impute_cart", "impute_rf", "impute_rhd","impute_shd","impute_knn","impute_mf","impute_em")
+    , model = c("M-estimation", "ridge/elasticnet/lasso", "CART"       , "random forest","random hot deck","sequential hot deck","k nearest neighbours","missForest","mv-normal")
+    , package = c("MASS"      ,"glmnet"                 , "rpart"      , "randomForest","VIM (optional)","VIM (optional)","VIM (optional)","missForest","norm")
+    , R.recommended = c("yes","no","yes","no","no","no","no","no","no")
     ,stringsAsFactors=FALSE
   )
 )
 ```
 
-Packages available in the R recommended suite are installed by default when R
-is installed (unless this was explicitly prevented at installation). The `VIM`
-package can be used as an optional backend for hot deck imputation procedures.
+Packages available in the R recommended suite are installed by default when R is
+installed (unless this was explicitly prevented at installation). Hotdeck 
+imputation (knn, rhd, shd) have their own implementations in simputation. The
+`VIM` package can be used as an optional backend for these.
 
 
 
@@ -195,6 +199,21 @@ dat[1:3,1] <- dat[3:7,2] <- NA
 dat %>% group_by(Species) %>% 
   impute_lm(Sepal.Length ~ Petal.Width)
 ```
+
+
+### Specify your own method with impute_proxy
+
+The `impute_proxy` function is somewhat special since it allows you to define
+an imputation method in the right-hand-side of the formula object. Below we
+implement a `robust ratio imputation' (for what its worth) as example.
+```{r}
+dat <- iris
+dat[1:3,1] <- dat[3:7,2] <- NA
+
+dat <- impute_proxy(dat, Sepal.Length ~ median(Sepal.Length,na.rm=TRUE)/median(Sepal.Width, na.rm=TRUE) * Sepal.Width | Species)
+head(dat)
+```
+
 
 ### Using VIM as backend for hotdeck imputations
 

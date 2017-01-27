@@ -2,7 +2,6 @@ version 0.2.1
 - Added support for ridge/elasticnet/lasso regression (using 'glmnet')
 - Added support for missForest imputation (using 'missForest')
 - Added support for imputation using EM-estimated parameters (using 'norm')
-- Added support for single stochastic EMB imputation (using 'Amelia')
 - 'impute_proxy' now supports transformations in the rhs of formula.
 - 'impute_median' gains 'type' argument to specify algorithm for median computation.
 - New functions 'simputation_capabilities' and 'simputation_suggests'
