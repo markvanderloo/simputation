@@ -94,7 +94,8 @@ predict.dummymodel <- function(object,...) NA
 residuals.dummymodel <- function(object,...) NA
 
 run_model <- function(fun, ...){
-    tryCatch(fun(...), error = function(e){
+    args <- list(...)
+    tryCatch(do.call(fun,args), error = function(e){
     # Get predicted variable. list(...)[[1]] must be a formula object
     p <- all.vars(list(...)[[1]])[[1]]
     # get model name.

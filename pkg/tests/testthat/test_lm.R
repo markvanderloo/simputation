@@ -77,8 +77,9 @@ test_that("stuff gets imputed",{
   for ( f in list(impute_lm, impute_rlm, impute_median) ){
     expect_warning(f(irisNA, foo ~ 1))
   }
-  
 })
+
+
 
 
 
@@ -102,5 +103,11 @@ test_that("grouped imputation",{
   
 })
 
-
+test_that("regression tests",{
+  irisNA <- iris
+  irisNA[1:3,1] <- NA
+  # this used to cause havoc because the ... was not passed correctly
+  out <- impute_lm(irisNA, .-Sepal.Width ~ 0 + Sepal.Width, weights=1/iris$Sepal.Length)
+  expect_equal(sum(is.na(out)),0)
+})
 
