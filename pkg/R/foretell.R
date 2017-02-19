@@ -28,7 +28,9 @@ foretell.default <- function(object,...) predict(object,...)
 #' @rdname foretell
 foretell.glm <- function(object, newdata=NULL, type, ...){
   if (missing(type)) type <- "response"
-  predict(object, newdata, type=type, ...)
+  family <- object$family$family
+  p <- predict(object, newdata, type=type, ...)
+  if (family == "binomial") p > 0.5 else p
 }
 
 #' @export
@@ -50,10 +52,8 @@ foretell.rpart <- function(object, newdata, type,...){
 #' @export
 #' @rdname foretell
 foretell.glmnet <- function(object, newdata, ...){
-  tm <- terms(object$formula)
-  
+  vars <- rownames(object$beta)
   # only complete cases in predictors can be used to compute predictions.
-  vars <- attr(tm,"term.labels")
   cc <- complete.cases(newdata[vars])
   y <- rep(NA_real_, nrow(newdata))
   if (!any(cc)) return(y)

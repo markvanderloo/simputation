@@ -162,16 +162,16 @@ impute_en <- function(dat, formula
 }
 
 
-predict.simputation.glmnet <- function(object, newdat, ...){
+predict.simputation.glmnet <- function(object, newdata, ...){
   tm <- terms(object$formula)
   
   # only complete cases in predictors can be used to compute imputations.
   vars <- attr(tm,"term.labels")
-  cc <- complete.cases(newdat[vars])
-  y <- rep(NA_real_, nrow(newdat))
+  cc <- complete.cases(newdata[vars])
+  y <- rep(NA_real_, nrow(newdata))
   if (!any(cc)) return(y)
   
-  newx <- model.matrix(stats::delete.response(tm),newdat)
+  newx <- model.matrix(stats::delete.response(tm),newdata)
   
   responsetype <- c(gaussian="link",poisson = "response")
   type <- responsetype[object$family]
