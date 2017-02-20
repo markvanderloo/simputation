@@ -140,8 +140,9 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 #' See \code{\link[glmnet:glmnet]{glmnet}} for details.
 #' @param s The value of \eqn{\lambda} to use when computing predictions for 
 #'   lasso/elasticnet regression (parameter \var{s} of 
-#'   \code{\link[glmnet:predict.glmnet]{predict.glmnet}}). For \code{impute\_en} the (optional)
-#'   parameter \var{lambda} is passed to \code{\link[glmnet]{glmnet}} when estimating
+#'   \code{\link[glmnet:predict.glmnet]{predict.glmnet}}). For \code{impute\_en}
+#'   the (optional) parameter \var{lambda} is passed to
+#'   \code{\link[glmnet]{glmnet}} when estimating
 #'   the model (which is advised against).
 #'   
 #' 
