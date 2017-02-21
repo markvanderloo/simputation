@@ -2,8 +2,8 @@
 # travis config
 
 language: r
-sudo: false
-cache: packages
+sudo: required
+#cache: packages
 #dist: trusty
 
 addons:
@@ -13,18 +13,12 @@ addons:
 
 r:
  - release
- - oldrel
- - devel
-
-r_packages:
-  - devtools
-  - roxygen2
-  - testthat
-  - covr
-  - rmarkdown
+# - oldrel
+# - devel
 
 
 before_install:
+  - R -e "install.packages(c('devtools','roxygen2','testthat','rmarkdown','covr'))"
   - R -e "devtools::install_deps('./pkg')"
   - R -e "devtools::document('./pkg')"
   - cd ./pkg
