@@ -3,8 +3,6 @@
 
 language: r
 sudo: required
-#cache: packages
-#dist: trusty
 
 addons:
   apt:
@@ -13,8 +11,8 @@ addons:
 
 r:
  - release
-# - oldrel
-# - devel
+ - oldrel
+ - devel
 
 
 before_install:
