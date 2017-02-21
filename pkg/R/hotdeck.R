@@ -159,6 +159,7 @@
 #' 
 #' @name impute_hotdeck
 #' @rdname impute_hotdeck
+#' @family imputation
 #' @export
 impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariate")
                        , prob, backend=getOption("simputation.hdbackend",default=c("simputation","VIM"))

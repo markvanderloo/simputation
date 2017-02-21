@@ -111,6 +111,7 @@
 #' i2 <- impute_rlm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
 #' 
 #' @rdname impute_lm
+#' @family imputation
 #' @export
 impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
                       ,na_action=na.omit, ...){
@@ -145,7 +146,6 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 #'   \code{\link[glmnet]{glmnet}} when estimating
 #'   the model (which is advised against).
 #'   
-#' 
 #' @export
 impute_en <- function(dat, formula
       , add_residual = c("none","observed","normal")

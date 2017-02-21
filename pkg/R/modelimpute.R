@@ -15,6 +15,10 @@
 #' \code{predict} method is implemented. Alternatively, one can specify a custom
 #' predicting function. This function must accept at least a model and a
 #' dataset, and return one predicted value for each row in the dataset.
+#' 
+#' \code{\link{foretell}} implements usefull \code{predict} methods for cases
+#' where by default the predicted output is not of the same type as the predicted
+#' variable (e.g. when using certain link functions in \code{glm})
 #'
 #' 
 #'    
@@ -26,7 +30,7 @@
 #'   \code{newdata}. By default \code{\link{foretell}} is used.
 #' @param ... Extra arguments passed to \code{predictor}
 #' 
-#' @seealso \code{\link{foretell}}, \code{\link{impute}}
+#' @family imputation
 #' 
 #' @export
 #' @examples 

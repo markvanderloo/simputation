@@ -68,6 +68,7 @@
 #' Breiman, L., 2001. Random forests. Machine learning, 45(1), pp.5-32.
 #'
 #' @rdname impute_tree   
+#' @family imputation
 #' @export
 impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp,
                         na_action=na.rpart, ...){
