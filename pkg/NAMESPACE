@@ -2,7 +2,6 @@
 
 S3method(foretell,default)
 S3method(foretell,glm)
-S3method(foretell,glmnet)
 S3method(foretell,rpart)
 S3method(print,simputation.capabilities)
 export(foretell)

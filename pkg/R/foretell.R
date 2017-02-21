@@ -45,65 +45,17 @@ foretell.rpart <- function(object, newdata, type,...){
   if (missing(type) ){
     type <- responsetype[object$method]
   } 
+  type <- match.arg(type,responsetype)
   out <- predict(object, newdata=newdata, type=type, ...)
-  if (type == "matrix") out[,2] else out
+  if (type == "matrix") out <- out[,2]
+  if (type == "class" && is_logical(out)) out <- as.logical(as.character(out))
+  out
 }
 
-#' @rdname foretell
-#' @param s The value of \eqn{\lambda} to use when computing predictions for 
-#'   lasso/elasticnet regression (parameter \var{s} of 
-#'   \code{\link[glmnet:predict.glmnet]{predict.glmnet}}).
-#' @export
-foretell.glmnet <- function(object, newdata, type, s=object$s, ...){
-  vars <- rownames(object$beta)
-  # only complete cases in predictors can be used to compute predictions.
-  cc <- complete.cases(newdata[vars])
-  y <- rep(NA_real_, nrow(newdata))
-  if (!any(cc)) return(y)
-  
-  newx <- model.matrix(stats::delete.response(tm),newdata)
-  
-  responsetype <- c(
-    gaussian="link"
-    , binomial = "class"
-    , poisson = "response"
-    , multinomial = "class"
-    , cox = "response"
-    , mgaussian = "response")
-  
-  
-  get_glm_family <- function(m){
-    # get textversion of call
-    str <- deparse(m$call, width.cutoff=500)
-    # remove possible line-breaks
-    str <- gsub("\\n+"," ",str)
-    # Check whether a 'family' argument was applied. This is safe because both 
-    # partial matches ('fam') and match-by-order get expanded before the call is
-    # stored in the 'glm' object.
-    has_family <- grepl("family[[:blank:]]*=",str)
-    family <- if (!has_family){
-      return("gaussian") # the default
-    } else {
-      sub(".*family[[:blank:]]*=[[:blank:]]*\"(.+?)\"[,)]","\\1",str)
-    }
-    # if the family name was abbreviated, we'll still find it...
-    lookup <- names(responsetype)
-    family <- lookup[pmatch(family,lookup)]
-    # ...unless we don't (but that should in principle not happen)
-    if(is.na(out)) warnf("could not determine glmnet family argument")
-    out
-  }
-  if (missing(type)){
-    family <- get_glm_family(object)
-    type <- responsetype["family"]
-  }
-  y[cc] <- predict(object, newx=newx, type=type, s=s, ...)
-  y
+# Check if we're dealing with a factor that is actually a logical.
+is_logical <- function(x){
+  is.factor(x) && nlevels(x) == 2 &&  all(levels(x) %in% c("FALSE","TRUE")) 
 }
-
-
-  
-  
   
 
 
