@@ -1,21 +1,34 @@
 
 # travis config
 
-sudo: required
-dist: trusty
-
 language: r
+sudo: false
 cache: packages
+#dist: trusty
+
+addons:
+  apt:
+    packages:
+      - libxml2-dev
+
+r:
+ - release
+ - oldrel
+ - devel
+
+r_packages:
+  - devtools
+  - roxygen2
+  - testthat
+  - covr
+  - rmarkdown
+
 
 before_install:
-  - R -e "install.packages(c('devtools','roxygen2','testthat','drat'))"
   - R -e "devtools::install_deps('./pkg')"
   - R -e "devtools::document('./pkg')"
   - cd ./pkg
 
-r_packages:
-  - covr
-  - rmarkdown
 
 
 after_success:
