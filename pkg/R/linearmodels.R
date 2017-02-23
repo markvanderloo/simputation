@@ -111,6 +111,7 @@
 #' i2 <- impute_rlm(irisNA, Sepal.Length + Sepal.Width ~ Species + Petal.Length)
 #' 
 #' @rdname impute_lm
+#' @family imputation
 #' @export
 impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
                       ,na_action=na.omit, ...){
@@ -140,11 +141,11 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 #' See \code{\link[glmnet:glmnet]{glmnet}} for details.
 #' @param s The value of \eqn{\lambda} to use when computing predictions for 
 #'   lasso/elasticnet regression (parameter \var{s} of 
-#'   \code{\link[glmnet:predict.glmnet]{predict.glmnet}}). For \code{impute\_en} the (optional)
-#'   parameter \var{lambda} is passed to \code{\link[glmnet]{glmnet}} when estimating
+#'   \code{\link[glmnet:predict.glmnet]{predict.glmnet}}). For \code{impute\_en}
+#'   the (optional) parameter \var{lambda} is passed to
+#'   \code{\link[glmnet]{glmnet}} when estimating
 #'   the model (which is advised against).
 #'   
-#' 
 #' @export
 impute_en <- function(dat, formula
       , add_residual = c("none","observed","normal")
@@ -162,16 +163,16 @@ impute_en <- function(dat, formula
 }
 
 
-predict.simputation.glmnet <- function(object, newdat, ...){
+predict.simputation.glmnet <- function(object, newdata, ...){
   tm <- terms(object$formula)
   
   # only complete cases in predictors can be used to compute imputations.
   vars <- attr(tm,"term.labels")
-  cc <- complete.cases(newdat[vars])
-  y <- rep(NA_real_, nrow(newdat))
+  cc <- complete.cases(newdata[vars])
+  y <- rep(NA_real_, nrow(newdata))
   if (!any(cc)) return(y)
   
-  newx <- model.matrix(stats::delete.response(tm),newdat)
+  newx <- model.matrix(stats::delete.response(tm),newdata)
   
   responsetype <- c(gaussian="link",poisson = "response")
   type <- responsetype[object$family]
