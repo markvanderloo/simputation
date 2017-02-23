@@ -62,6 +62,30 @@ impute <- function(dat, formula, predictor = foretell, ...){
 }
 
 
-
-
+#' @section Details:
+#' 
+#' \code{impute_} is an explicit version of \code{impute} that works better in
+#' programming contexts, especially in cases involving nonstandard evaluation.
+#'
+#' @rdname impute
+#' @param var \code{[character]} Names of columns in \code{dat} to impute.
+#' @param model A model object.
+impute_ <- function(dat, variables, model, predictor=foretell,...){
+  imputed <- variables
+  args <- list(object=model, newdata=dat,...)
+  
+  pred_val <- tryCatch(do.call(predictor,args), error=function(e){
+    warnf("Could not compute predictions:\n%s\nReturning original data.", e$message)
+    NULL
+  })
+  if (is.null(pred_val)) return(dat)
+  if (length(pred_val) != nrow(dat))
+    warnf("Numberof values returned by the predictor is not equal to number of rows in data")
+  
+  for (var in imputed){
+    ina <- is.na(dat[var])
+    dat[ina,var] <- pred_val[ina]
+  }
+  dat
+}
 

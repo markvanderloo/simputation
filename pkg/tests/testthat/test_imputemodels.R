@@ -11,6 +11,13 @@ test_that("stuff gets imputed",{
   
   expect_equal(sum(is.na(out)),0L)  
 
+  m <- lm(Sepal.Length ~ Petal.Width,data=iris)
+  out <- impute_(irisNA, variables = "Sepal.Length",model=m)
+  expect_equal( sum(is.na(out)),3)
+  out <- impute_(irisNA, variables = c("Sepal.Length","Sepal.Width"),model=m)
+  expect_equal( sum(is.na(out)),0)
+  
+  
 })
 
 
