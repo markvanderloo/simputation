@@ -68,7 +68,7 @@ impute <- function(dat, formula, predictor = foretell, ...){
 #' programming contexts, especially in cases involving nonstandard evaluation.
 #'
 #' @rdname impute
-#' @param var \code{[character]} Names of columns in \code{dat} to impute.
+#' @param variables \code{[character]} Names of columns in \code{dat} to impute.
 #' @param model A model object.
 impute_ <- function(dat, variables, model, predictor=foretell,...){
   imputed <- variables

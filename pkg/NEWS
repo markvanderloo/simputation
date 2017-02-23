@@ -1,4 +1,5 @@
 version 0.2.2
+- new functions 'impute' and 'impute_' use pre-fit models to impute datasets.
 - bugfix: ... arguments were not passed correctly for linear models.
 
 version 0.2.1
