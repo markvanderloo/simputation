@@ -16,5 +16,5 @@ BugReports: https://github.com/markvanderloo/simputation/issues
 Date: 2017-01-27
 Suggests: testthat, knitr, rmarkdown, dplyr, VIM, randomForest, glmnet
   , missForest, norm
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 VignetteBuilder: knitr
