@@ -39,6 +39,7 @@ imputation methodology is supported.
     - (groupwise) median imputation (optional random residual)
     - Proxy imputation: copy another variable or use a simple transformation
       to compute imputed values.
+    - Apply trained models for imputation purposes.
 
 
 ### Installation
