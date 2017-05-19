@@ -214,8 +214,25 @@ dat <- impute_proxy(dat, Sepal.Length ~ median(Sepal.Length,na.rm=TRUE)/median(S
 head(dat)
 ```
 
+### Imputing a dataset with models trained on another dataset
 
-### Using VIM as backend for hotdeck imputations
+This can be done with the `impute` function. To use it, train your
+model in the way you are used to.
+```{r}
+m <- lm(Sepal.Length ~ Sepal.Width + Species, data=iris)
+```
+Next, use this model to impute a dataset.
+```{r}
+dat <- iris
+dat[1:3,1] <- dat[3:7,2] <- NA
+head(dat)
+
+dat <- impute(dat, Sepal.Length ~ m)
+head(dat)
+```
+That's really all there is to it.
+
+### Using VIM as (much) faster backend for hotdeck imputations
 
 The [VIM](https://CRAN.R-project.org/package=VIM) package offers fast implementations for sequential
 and random hotdeck procedures (based on the [data.table](https://CRAN.R-project.org/package=data.table) 
