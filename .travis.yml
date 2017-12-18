@@ -11,7 +11,6 @@ addons:
 
 r:
  - release
- - oldrel
  - devel
 
 
