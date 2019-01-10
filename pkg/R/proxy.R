@@ -203,10 +203,14 @@ impute_median <- function(dat, formula
     , warning=function(w) invokeRestart("muffleWarning") 
   )
   # create nrow(data) X npredictors data.frame with formula values.
-  imp <- if (length(predictors) == 0) 
-    cbind(by[[1]], medians) # about 75 times faster than merge
-  else 
-    merge(dat[predictors], medians, all.x=TRUE, all.y=FALSE)
+  if (length(predictors) == 0){
+    imp <- cbind(by[[1]], medians) # about 75 times faster than merge
+  } else {
+    imp <- dat[predictors]
+    imp$..._order_... <- seq_len(nrow(dat))
+    imp <- merge(imp, medians, all.x=TRUE, all.y=FALSE, sort=FALSE)
+    imp <- imp[order(imp$..._order_...),,drop=FALSE]
+  } 
   
   for ( p in predicted ){
     if (is.na(medians[1,p]))

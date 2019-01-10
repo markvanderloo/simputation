@@ -1,3 +1,6 @@
+version 0.2.3
+- Fix in impute_median: wrong medians imputed at randomly sorted data (thanks to Ranjeed-S).
+
 version 0.2.2
 - new functions 'impute' and 'impute_' use pre-fit models to impute datasets. (Thanks to Max Kuhn for suggesting this).
 - new utility function 'foretell'. Replacement for 'predict' that always returns values of the predicted type.
