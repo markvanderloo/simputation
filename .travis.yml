@@ -15,9 +15,9 @@ r:
 
 
 before_install:
-  - R -e "install.packages(c('devtools','roxygen2','testthat','rmarkdown','covr'))"
+  - R -e "install.packages(c('pkgload','devtools','roxygen2','testthat','rmarkdown','covr'))"
   - R -e "devtools::install_deps('./pkg')"
-  - R -e "devtools::load_all('./pkg'); devtools::document('./pkg')"
+  - R -e "pkgload::load_all('./pkg'); devtools::document('./pkg')"
   - cd ./pkg
 
 
