@@ -9,12 +9,12 @@ Authors@R: c( person("Mark", "van der Loo",
         role=c("aut","cre"),email="mark.vanderloo@gmail.com"))
 Description: Easy to use interfaces to a number of imputation methods
         that fit in the not-a-pipe operator of the 'magrittr' package.
-Version: 0.2.2
+Version: 0.2.3
 Imports: stats, utils, MASS, rpart, gower
 URL: https://github.com/markvanderloo/simputation
 BugReports: https://github.com/markvanderloo/simputation/issues
 Date: 2017-01-27
-Suggests: testthat, knitr, rmarkdown, dplyr, VIM, randomForest, glmnet
+Suggests: tinytest, knitr, rmarkdown, dplyr, VIM, randomForest, glmnet
   , missForest, norm
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 VignetteBuilder: knitr
