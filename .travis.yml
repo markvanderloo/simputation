@@ -11,11 +11,10 @@ addons:
 
 r:
  - release
- - devel
 
 
 before_install:
-  - R -e "install.packages(c('pkgload','roxygen2','tinytest','rmarkdown','covr'))"
+  - R -e "install.packages(c('pkgload','roxygen2','devtools','tinytest','rmarkdown','covr'))"
   - R -e "devtools::install_deps('./pkg')"
   - R -e "pkgload::load_all('./pkg'); devtools::document('./pkg')"
   - cd ./pkg
