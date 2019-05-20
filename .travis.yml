@@ -17,7 +17,7 @@ r:
 before_install:
   - R -e "install.packages(c('pkgload','roxygen2','tinytest','rmarkdown','covr'))"
   - R -e "devtools::install_deps('./pkg')"
-  - R -e "devtools::document('./pkg')"
+  - R -e "pkgload::load_all('./pkg'); devtools::document('./pkg')"
   - cd ./pkg
 
 

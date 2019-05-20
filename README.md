@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/markvanderloo/simputation.svg?branch=master)](https://travis-ci.org/markvanderloo/simputation)
 [![Coverage Status](https://coveralls.io/repos/github/markvanderloo/simputation/badge.svg?branch=master)](https://coveralls.io/github/markvanderloo/simputation?branch=master)
 [![drat version](https://img.shields.io/badge/drat-0.2.2-green.svg)]()
-[![CRAN](http://www.r-pkg.org/badges/version/simputation)](https://CRAN.R-project.org/package=simputation)
+[![CRAN](http://www.r-pkg.org/badges/version/simputation)](https://CRAN.R-project.org/package=simputation)[![status](https://tinyverse.netlify.com/badge/simputation)](https://CRAN.R-project.org/package=simputation)
 [![Downloads](http://cranlogs.r-pkg.org/badges/simputation)](https://CRAN.R-project.org/package=simputation)[![Mentioned in Awesome Official Statistics ](https://awesome.re/mentioned-badge.svg)](http://www.awesomeofficialstatistics.org)
 
 

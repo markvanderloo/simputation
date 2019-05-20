@@ -1,5 +1,6 @@
 version 0.2.3
 - switched to 'tinytest' testing framework
+- Fix in impute_median: wrong medians imputed at randomly sorted data (thanks to Ranjeed-S).
 
 version 0.2.2
 - new functions 'impute' and 'impute_' use pre-fit models to impute datasets. (Thanks to Max Kuhn for suggesting this).
