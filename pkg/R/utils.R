@@ -9,17 +9,17 @@ not_installed <- function(pkg, action="Returning original data"){
 #'
 #' Simputation relies on a number of packages for model estimation
 #' and/or imputation. Not all of these packages are installed when
-#' \pkg{simputation} is installed. 
-#' 
+#' \pkg{simputation} is installed.
+#'
 #' @section details:
-#' 
+#'
 #' \code{simputation_capabilities} Calls every \code{impute_} function and
 #' grabs the warning message (if any) stating that a package is missing.
-#' 
+#'
 #' \code{simputation_suggests} checks which of the suggested packages
 #' implementing statistical models are available.
-#' 
-#' 
+#'
+#'
 #' @return
 #' For \code{simputation_capabilities} A named \code{character} vector of class
 #' \code{simputation.capabilities}. The class attribute allows pretty-printing
@@ -29,15 +29,15 @@ not_installed <- function(pkg, action="Returning original data"){
 simputation_capabilities <- function(){
   funs <- getNamespaceExports("simputation")
   funs <- funs[grep("impute_",funs)]
-  
+
   out <- rep("OK",length(funs))
   names(out) <- funs
   women <- data.frame(height=1:15, weight=1:15)
-  
+
   L <- sapply(funs, function(fun){
     frm <- if (grepl("const",fun)) height ~ 1 else height ~ weight
     ifun <- getExportedValue("simputation",fun)
-    tryCatch(ifun(women, frm), warning = function(e){ 
+    tryCatch(ifun(women, frm), warning = function(e){
       out[fun] <<- gsub("\\..*", "", e$message)
     })
   })
@@ -45,21 +45,21 @@ simputation_capabilities <- function(){
   out
 }
 
-#' @rdname simputation_capabilities 
-#' @param lib.loc Where to check whether a package is installed (passed to 
+#' @rdname simputation_capabilities
+#' @param lib.loc Where to check whether a package is installed (passed to
 #'   \code{\link[utils]{installed.packages}})
-#'   
-#' @return 
+#'
+#' @return
 #' For \code{simputation_suggests} a \code{logical} vector, stating which
 #' suggested packages are currently installed (\code{TRUE}) or not
 #' (\code{FALSE}).
-#' 
+#'
 #' @export
 simputation_suggests <- function(lib.loc=NULL){
   # this function finds the actual dependencies, and faster
   # then utils::package_dependencies
   fl <- system.file("DESCRIPTION", package="simputation")
-  if(file.exists(fl)){ 
+  if(file.exists(fl)){
     dcf <- read.dcf(fl)
   } else {
     cat(sprintf("Could not find DESCRIPTION file"))
@@ -78,7 +78,7 @@ simputation_suggests <- function(lib.loc=NULL){
 #'
 #' @param x an R object
 #' @param ... unused
-#' 
+#'
 #' @export
 #' @keywords internal
 print.simputation.capabilities <- function(x, ...){
@@ -135,7 +135,7 @@ groups <- function(dat, frm){
   # dplyr compatability:
   if (inherits(dat,"grouped_df")){
    grp <- sapply(attr(dat,"vars"), as.character)
-  } 
+  }
   # also take grouping from formula
   if (has_groups(frm)){
     n <- length(frm)
@@ -153,7 +153,7 @@ remove_groups <- function(frm){
 
 
 do_by <- function(dat,groups,.fun,...){
-  out <- if ( length(groups) == 0 ){ 
+  out <- if ( length(groups) == 0 ){
     .fun(dat, ...)
   } else {
     if(anyNA(dat[groups]))
@@ -187,11 +187,11 @@ get_imputed <- function(frm, dat){
 # NAME      = <A valid R symbol name>
 # UNARYMIN  = "-"
 # BINOP     = "+" | "-"
-# PREDICTED = [UNARYMIN] NAME [BINOP PREDICTED] 
+# PREDICTED = [UNARYMIN] NAME [BINOP PREDICTED]
 #
 is_additive <- function(expr,val=TRUE){
-  if (length(expr)==1) return(is.symbol(expr)) 
-  
+  if (length(expr)==1) return(is.symbol(expr))
+
   if (deparse(expr[[1]]) %in% c("+", "-") ){
     for (i in seq_along(expr)[-1]) val <- val & is_additive(expr[[i]],val)
   } else {
@@ -209,12 +209,12 @@ get_predictors <- function(frm, dat, one_ok = FALSE){
   # normally 3, 2 for formulas of type ~ x
   n <- length(frm)
   if (one_ok) is_one <- frm[[n]] == 1
-  
+
   if (  (one_ok && is_one) || is_additive(frm[[n]])  ){
     if( n == 3 ) frm[[2]] <- 1
     colnames(attr(terms(frm, data=dat),"factors"))
   } else {
-    stop(sprintf("Invalid specification of predictors %s:",deparse(frm[[n]])), call.=FALSE)    
+    stop(sprintf("Invalid specification of predictors %s:",deparse(frm[[n]])), call.=FALSE)
   }
 
 }
@@ -224,17 +224,17 @@ get_predictors <- function(frm, dat, one_ok = FALSE){
 rpart::na.rpart
 
 #' Rough imputation for handling missing predictors.
-#' 
-#' This function is re-exported from 
-#' \code{\link[randomForest:na.roughfix]{randomForest:na.roughfix}} when 
-#' available. Otherwise it will throw a warning and resort to 
+#'
+#' This function is re-exported from
+#' \code{\link[randomForest:na.roughfix]{randomForest:na.roughfix}} when
+#' available. Otherwise it will throw a warning and resort to
 #' \code{options("na.action")}
-#' 
+#'
 #' @param object an R object caryying data (e.g. \code{data.frame})
 #' @param ... arguments to be passed to other methods.
-#' 
-#' 
-#' 
+#'
+#'
+#'
 #' @export
 na.roughfix <- function(object,...){
   fn <- if (not_installed("randomForest","Resorting to options('na.action').")){
