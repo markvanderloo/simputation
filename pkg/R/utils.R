@@ -244,3 +244,18 @@ na.roughfix <- function(object,...){
   }
   fn(object,...)
 }
+
+#' A \code{deparse} replacement that always returns a length-1 vector
+#'
+#' @param ... Arguments passed on to \code{base::deparse()}
+#' @return The deparsed string
+#'
+#' @examples
+#' long_formula <- this_is_a_formula_with_long_variables ~
+#'   the_test_is_checking_if_deparse_will_return +
+#'   multiple_strings_or_not
+#' simputation:::deparse(long_formula)
+deparse <- function(...) {
+  orig_deparse <- base::deparse(...)
+  paste(orig_deparse, collapse=" ")
+}
