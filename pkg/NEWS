@@ -1,3 +1,7 @@
+version 0.2.4
+- Fixed parsing error for formulas with very long variable names (Thanks to 
+  Karl Dunkle Werner).
+
 version 0.2.3
 - switched to 'tinytest' testing framework
 - Fix in impute_median: wrong medians imputed at randomly sorted data (thanks to Ranjeed-S).
