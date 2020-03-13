@@ -3,6 +3,7 @@ version 0.2.4
   (thanks to Kurt Hornik)
 - Fixed parsing error for formulas with very long variable names (Thanks to 
   Karl Dunkle Werner).
+- Fix: ... was not parsed to 'missForest' in 'impute_mf'.
 
 version 0.2.3
 - switched to 'tinytest' testing framework
