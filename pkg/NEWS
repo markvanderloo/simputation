@@ -1,4 +1,6 @@
 version 0.2.4
+- Updated tests in preparation of the new 'stringsAsFactors=FALSE' policy 
+  (thanks to Kurt Hornik)
 - Fixed parsing error for formulas with very long variable names (Thanks to 
   Karl Dunkle Werner).
 

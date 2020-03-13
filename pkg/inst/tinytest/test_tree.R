@@ -1,15 +1,16 @@
-
+# option to check whether R runs with the new stringsAsFactors policy
+#options(stringsAsFactors=FALSE)
 
 ## Tree models
 # some testing is also done in test_lm
 ## CART models
   
 # impute categorical data
-dat <- data.frame(x=rep(c("a","b"),each=50), y = 1:100)
+dat <- data.frame(x=rep(c("a","b"),each=50), y = 1:100, stringsAsFactors=TRUE)
 dat[c(1,10),1] <- NA
 expect_equal(
   impute_cart(dat, x ~ y)
-, data.frame(x=rep(c("a","b"),each=50), y = 1:100)
+, data.frame(x=rep(c("a","b"),each=50), y = 1:100, stringsAsFactors=TRUE)
 )
 # impute logical data
 dat <- data.frame(x=rep(c(TRUE,FALSE),each=50), y = 1:100)
@@ -26,6 +27,7 @@ dat <- data.frame(
   , y = sample(c(TRUE,FALSE),100,replace=TRUE)
   , z = sample(letters[1:4],100,replace=TRUE)
   , p = runif(100)
+  , stringsAsFactors=TRUE
 )
 dat[1:3,"x"] <- NA
 dat[4:6,"y"] <- NA
@@ -60,6 +62,7 @@ dat <- data.frame(
   x = 1:100
   , y = rep(LETTERS[1:4],times=25)
   , z = rep(c("a","b"),each=50)
+  , stringsAsFactors=TRUE
 )
 dat[2,1] <- NA
 expect_true(impute_cart(dat, x ~ y|z)[2,1] < impute_cart(dat, x ~ y)[2,1])
