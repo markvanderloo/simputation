@@ -176,7 +176,10 @@ get_imputed <- function(frm, dat){
   }
   frm[[3]] <- frm[[2]]
   frm[[2]] <- 1
-  colnames(attr(terms(frm, data=dat),"factors"))
+  x <- colnames(attr(terms(frm, data=dat),"factors"))
+  # in case of back-ticked variables, use only the substring between
+  # backticks (so backtics are not part of the string)
+  if (!is.null(x)) gsub("`(.*?)`","\\1",x) else x
 }
 
 
@@ -212,7 +215,10 @@ get_predictors <- function(frm, dat, one_ok = FALSE){
 
   if (  (one_ok && is_one) || is_additive(frm[[n]])  ){
     if( n == 3 ) frm[[2]] <- 1
-    colnames(attr(terms(frm, data=dat),"factors"))
+    x <- colnames(attr(terms(frm, data=dat),"factors"))
+    # in case of back-ticked variables, use only the substring between
+    # backticks (so backtics are not part of the string)
+    if (!is.null(x)) gsub("`(.*?)`","\\1",x) else x
   } else {
     stop(sprintf("Invalid specification of predictors %s:",deparse(frm[[n]])), call.=FALSE)
   }

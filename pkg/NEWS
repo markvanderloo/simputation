@@ -4,6 +4,8 @@ version 0.2.4
 - Fixed parsing error for formulas with very long variable names (Thanks to 
   Karl Dunkle Werner).
 - Fix: ... was not parsed to 'missForest' in 'impute_mf'.
+- Fix: Column names with spaces were not handled properly (Thanks to Miles
+  McBain)
 
 version 0.2.3
 - switched to 'tinytest' testing framework
