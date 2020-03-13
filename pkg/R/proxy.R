@@ -77,7 +77,7 @@ impute_proxy <- function(dat, formula, add_residual = c("none","observed","norma
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   groups <- groups(formula, dat = dat)
-  predicted <- get_imputed(formula,names(dat))
+  predicted <- get_imputed(formula, dat)
   
   proxy <- function(d){
     v <- eval(formula[[3]],envir=d)
@@ -98,8 +98,12 @@ impute_proxy <- function(dat, formula, add_residual = c("none","observed","norma
   }
   for ( p in predicted){
     ina <- is.na(dat[,p])
-    dat[ina,p] <- imp_val[ina] + 
-      get_res(sum(ina), imp_val[!ina] - dat[!ina,p], type=add_residual)
+    if (is.numeric(imp_val)){
+      dat[ina,p] <- imp_val[ina] + 
+        get_res(sum(ina), imp_val[!ina] - dat[!ina,p], type=add_residual)
+    } else {
+      dat[ina,p] <- imp_val[ina]
+    }
   }
   dat
 }

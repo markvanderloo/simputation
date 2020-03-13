@@ -6,6 +6,8 @@ version 0.2.4
 - Fix: ... was not parsed to 'missForest' in 'impute_mf'.
 - Fix: Column names with spaces were not handled properly (Thanks to Miles
   McBain)
+- Fix: 'impute_proxy' would crash when imputing a character constant.
+
 
 version 0.2.3
 - switched to 'tinytest' testing framework
