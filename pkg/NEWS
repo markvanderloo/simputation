@@ -1,3 +1,7 @@
+version 0.2.5
+- CRAN-requested update, avoiding misuse of 'order' on data.frames
+  (Thanks to Kurt Hornik for reporting).
+
 version 0.2.4
 - Updated tests in preparation of the new 'stringsAsFactors=FALSE' policy 
   (thanks to Kurt Hornik)

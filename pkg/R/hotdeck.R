@@ -319,7 +319,11 @@ shd_work <- function(dat, formula, pool=c("complete","univariate","multivariate"
   predicted <- get_imputed(formula, dat)
   predictors <- get_predictors(formula, dat, one_ok=TRUE)
   
-  ord <- if( length(predictors) > 0) order(dat[predictors],decreasing=FALSE) else seq_len(nrow(dat)) 
+  ord <- if( length(predictors) > 0){
+    do.call("order", dat[predictors]) # decreasing=FALSE by default 
+  } else {
+    seq_len(nrow(dat)) 
+  }
   if (order=="locf") ord <- rev(ord)
   
   # create index to reverse ordering later.
