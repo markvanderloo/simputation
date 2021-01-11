@@ -58,9 +58,9 @@
 #' \code{impute_rlm} can be used to impute numerical variables employing
 #' numerical and/or categorical predictors. In \eqn{M}-estimation, the
 #' minimization of the squares of residuals is replaced with an alternative
-#' convex function of the residuals. A concise online description
-#' of \eqn{M}-estimation can be found 
-#' \href{http://research.microsoft.com/en-us/um/people/zhang/INRIA/Publis/Tutorial-Estim/node24.html#SECTION000104000000000000000}{here}.
+#' convex function of the residuals that decreases the influence of 
+#' outliers.
+#' 
 #' Also see e.g.  Huber (1981).
 #' 
 #' \bold{Lasso/elastic net/ridge regression imputation} with \code{impute_en} 
