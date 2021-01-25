@@ -1,3 +1,7 @@
+version 0.2.6
+- Fixed error in 'impute_shd' caused by VIM update.
+
+
 version 0.2.5
 - CRAN-requested update, avoiding misuse of 'order' on data.frames
   (Thanks to Kurt Hornik for reporting).

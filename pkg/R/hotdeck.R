@@ -11,7 +11,9 @@
 #' @param dat \code{[data.frame]}, with variables to be imputed and their
 #'   predictors.
 #' @param formula \code{[formula]} imputation model description (see Details below).
-#' @param backend \code{[character]} Choose the backend for imputation.
+#' @param backend \code{[character]} Choose the backend for imputation. If 
+#' \code{backend="VIM"} the variables used to sort the data (in case of
+#'  sequential hot deck) may not coincide with imputed variables.
 #' @param pool \code{[character]} Specify donor pool when \code{backend="simputation"}
 #' \itemize{
 #' \item{\code{"complete"}. Only records for which the variables on the
@@ -296,7 +298,7 @@ impute_shd <- function(dat, formula, pool=c("complete","univariate","multivariat
     if (length(predictors)==0) predictors <- ".vim.doemmy.sortvar"
     dat$.vim.doemmy.sortvar <- seq_len(nrow(dat))
     out <- hd_vim(data=dat
-      , variable = get_imputed(formula, dat)
+      , variable = setdiff(get_imputed(formula, dat), predictors)
       , ord_var = predictors
       , domain_var = groups(dat, formula)
       , ...

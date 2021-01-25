@@ -151,7 +151,7 @@ if ( suppressPackageStartupMessages(require("VIM", quietly=TRUE)) ){
     , bar = c(2,NA,NA,8)
   )
   expect_equal(
-    impute_shd(dat, .~id, backend="VIM")
+    impute_shd(dat, .~ id, backend="VIM")
     , impute_shd(dat, .~ id, pool="univariate")
   )
   
