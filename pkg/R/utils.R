@@ -282,7 +282,7 @@ deparse <- function(...) {
 #' @param x an R object caryying data (e.g. \code{data.frame})
 #' @param show_only_missing if \code{TRUE} only columns with \code{NA}'s will be
 #' printed.
-#' @param ... arguments to be passed to other methods.
+#' @param ... arguments passed to \code{\link{na_status}}.
 #' @examples
 #' if (requireNamespace("dplyr")){
 #'    library(dplyr)
@@ -361,10 +361,13 @@ glimpse_na <- function(x, show_only_missing = TRUE, ...){
 #' @param x an R object caryying data (e.g. \code{data.frame})
 #' @param show_only_missing if \code{TRUE} only columns with \code{NA}'s will be
 #' printed.
+#' @param sort_columns If \code{TRUE} the columns are sorted descending 
+#' by the number of missing values.
 #' @param show_message if \code{TRUE} message will be printed.
 #' @param ... arguments to be passed to other methods.
 na_status <- function( x
                      , show_only_missing = TRUE
+                     , sort_columns = show_only_missing
                      , show_message = TRUE
                      , ...
                      ){
@@ -379,7 +382,9 @@ na_status <- function( x
     col_nas <- col_nas[col_nas > 0]
   }
   # sort from high to low
-  col_nas <- rev(sort(col_nas))
+  if (isTRUE(sort_columns)){
+    col_nas <- rev(sort(col_nas))
+  }
   d <- data.frame( columns = names(col_nas)
                  , nNA     = unname(col_nas)
   )
