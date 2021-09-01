@@ -1,3 +1,8 @@
+version 0.2.7
+- Updated C-code for compatability with CLANG compiler (Thanks
+  to Brian Ripley for pointing out the specific noncompliance 
+  with WRE)
+
 version 0.2.6
 - Fixed error in 'impute_shd' caused by VIM update.
 
