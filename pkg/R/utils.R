@@ -265,3 +265,153 @@ deparse <- function(...) {
   orig_deparse <- base::deparse(...)
   paste(orig_deparse, collapse=" ")
 }
+
+#' Show the number of (remaining) missing values.
+#' 
+#' Quick indication of the amount and location of missing values.
+#' The function uses \code{\link{na_status}} to print the missing values, but
+#' returns the original \code{x} (invisibly) and therefore can be used in an imputation pipeline
+#' to peek at the NA's status.
+#' 
+#' \code{glimpse_na} is especially helpful when interactively adding imputation methods.
+#' \code{glimpse_na} is named after \code{\link[dplyr]{glimpse}} in \code{dplyr}.
+#' 
+#' Operator \code{\%?>\%} is syntactic sugar: it inserts a \code{glimpse_na} in
+#' the pipe.
+#'
+#' @param x an R object caryying data (e.g. \code{data.frame})
+#' @param show_only_missing if \code{TRUE} only columns with \code{NA}'s will be
+#' printed.
+#' @param ... arguments passed to \code{\link{na_status}}.
+#' @examples
+#' if (requireNamespace("dplyr")){
+#'    library(dplyr)
+#'    
+#'    irisNA <- iris
+#'    irisNA[1:3,1] <- irisNA[3:7,2] <- NA
+#'    
+#'    # How many NA's?
+#'    na_status(irisNA)
+#'    
+#'    # add an imputation method one at a time
+#'    iris_imputed <-
+#'      irisNA %>% 
+#'      glimpse_na() # same as above
+#'    
+#'    # ok, glimpse_na says "Sepal.Width" has NA's
+#'    # fix that:
+#'    
+#'    iris_imputed <-
+#'      irisNA %>% 
+#'      impute_const(Sepal.Width ~ 7) %>% 
+#'      glimpse_na() # end NA
+#'    
+#'    # Sepal.Length is having NA's
+#'    
+#'    iris_imputed <-
+#'      irisNA %>% 
+#'      impute_const(Sepal.Width ~ 7) %>%
+#'      impute_cart(Sepal.Length ~ .) %>%  
+#'      glimpse_na() # end NA
+#'    
+#'    # in an existing imputation pipeline we can peek with
+#'    # glimpse_na or %?>%
+#'    
+#'    iris_imputed <-
+#'      irisNA %>% 
+#'      glimpse_na() %>%     # shows the begin NA
+#'      impute_const(Sepal.Width ~ 7) %>% 
+#'      glimpse_na() %>%     # after 1 imputation
+#'      impute_cart(Sepal.Length ~ .) %>%  
+#'      glimpse_na()         # end NA
+#'      
+#'    # or
+#'    iris_imputed <-
+#'      irisNA %?>% 
+#'      impute_const(Sepal.Width ~ 7) %?>% 
+#'      impute_cart(Sepal.Length ~ .)
+#'      
+#'    na_status(iris_imputed)  
+#' }
+#' @export
+glimpse_na <- function(x, show_only_missing = TRUE, ...){
+  if (is.data.frame(x)){
+    nas <- na_status(x, show_only_missing = TRUE, ...)
+    if (nrow(nas)){
+      print(nas)
+    }
+  }
+  invisible(x)
+}
+
+#' Show the number of (remaining) missing values.
+#' 
+#' Quick indication of the amount and location of missing values.
+#' @examples 
+#' irisNA <- iris
+#' irisNA[1:3,1] <- irisNA[3:7,2] <- NA
+#' na_status(irisNA)
+#'
+#' # impute a constant 
+#' a <- impute_const(irisNA, Sepal.Width ~ 7)
+#' na_status(a)
+#' @return \code{data.frame} with the column and number of NA's
+#' @seealso \code{\link{glimpse_na}}
+#' @export
+#' @param x an R object caryying data (e.g. \code{data.frame})
+#' @param show_only_missing if \code{TRUE} only columns with \code{NA}'s will be
+#' printed.
+#' @param sort_columns If \code{TRUE} the columns are sorted descending 
+#' by the number of missing values.
+#' @param show_message if \code{TRUE} message will be printed.
+#' @param ... arguments to be passed to other methods.
+na_status <- function( x
+                     , show_only_missing = TRUE
+                     , sort_columns = show_only_missing
+                     , show_message = TRUE
+                     , ...
+                     ){
+  if (!is.data.frame(x)){
+    stop("na_status works only only data.frame's", call. = FALSE)
+  }
+  col_nas <- sapply(x, function(v){
+    sum(is.na(v))
+  })
+    
+  if (isTRUE(show_only_missing)){
+    col_nas <- col_nas[col_nas > 0]
+  }
+  # sort from high to low
+  if (isTRUE(sort_columns)){
+    col_nas <- rev(sort(col_nas))
+  }
+  d <- data.frame( columns = names(col_nas)
+                 , nNA     = unname(col_nas)
+  )
+  if (nrow(d) > 0){
+    if (show_message) {
+      message("\nna count: ", sum(col_nas),"")
+    }
+    d
+  } else {
+    if (show_message) {message("\nNo NA's.")}
+    invisible(d)
+  }
+}
+
+#' @export 
+#' @rdname glimpse_na
+#' @param lhs left hand side of pipe
+#' @param rhs right hand side of pipe
+`%?>%` <- function(lhs, rhs){
+  # using dplyr instead of magrittr otherwise this 
+  # generates a check-as-cran warning
+  if (requireNamespace("dplyr", quietly = TRUE)){
+    `%>%` <- dplyr::`%>%`
+    e <- substitute(lhs %>% glimpse_na() %>% rhs)
+    eval(e)
+  } else {
+    stop("This method depends on package `dplyr`.", call. = FALSE)
+  }
+}
+
