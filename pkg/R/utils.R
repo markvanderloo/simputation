@@ -7,9 +7,10 @@ not_installed <- function(pkg, action="Returning original data"){
 
 #' Capabilities depending on suggested packages.
 #'
-#' Simputation relies on a number of packages for model estimation
-#' and/or imputation. Not all of these packages are installed when
-#' \pkg{simputation} is installed.
+#' This function has bevome unnecessary as of \code{simputation} 0.2.8 and higher.
+#' It will be removed from future versions.
+#' 
+#' 
 #'
 #' @section details:
 #'
@@ -26,7 +27,9 @@ not_installed <- function(pkg, action="Returning original data"){
 #' of the output.
 #'
 #' @export
+#' @keywords internal
 simputation_capabilities <- function(){
+  message("This function is unnecessary as of simputation 0.2.8 and will be removed in the next version.")
   funs <- getNamespaceExports("simputation")
   funs <- funs[grep("impute_",funs)]
 
@@ -55,7 +58,9 @@ simputation_capabilities <- function(){
 #' (\code{FALSE}).
 #'
 #' @export
+#' @keywords internal
 simputation_suggests <- function(lib.loc=NULL){
+  message("This function is unnecessary as of simputation 0.2.8 and will be removed in the next version.")
   # this function finds the actual dependencies, and faster
   # then utils::package_dependencies
   fl <- system.file("DESCRIPTION", package="simputation")
@@ -284,55 +289,55 @@ deparse <- function(...) {
 #' printed.
 #' @param ... arguments passed to \code{\link{na_status}}.
 #' @examples
-#' if (requireNamespace("dplyr")){
-#'    library(dplyr)
+#' 
+#' 
 #'    
-#'    irisNA <- iris
-#'    irisNA[1:3,1] <- irisNA[3:7,2] <- NA
-#'    
-#'    # How many NA's?
-#'    na_status(irisNA)
-#'    
-#'    # add an imputation method one at a time
-#'    iris_imputed <-
-#'      irisNA %>% 
-#'      glimpse_na() # same as above
-#'    
-#'    # ok, glimpse_na says "Sepal.Width" has NA's
-#'    # fix that:
-#'    
-#'    iris_imputed <-
-#'      irisNA %>% 
-#'      impute_const(Sepal.Width ~ 7) %>% 
-#'      glimpse_na() # end NA
-#'    
-#'    # Sepal.Length is having NA's
-#'    
-#'    iris_imputed <-
-#'      irisNA %>% 
-#'      impute_const(Sepal.Width ~ 7) %>%
-#'      impute_cart(Sepal.Length ~ .) %>%  
-#'      glimpse_na() # end NA
-#'    
-#'    # in an existing imputation pipeline we can peek with
-#'    # glimpse_na or %?>%
-#'    
-#'    iris_imputed <-
-#'      irisNA %>% 
-#'      glimpse_na() %>%     # shows the begin NA
-#'      impute_const(Sepal.Width ~ 7) %>% 
-#'      glimpse_na() %>%     # after 1 imputation
-#'      impute_cart(Sepal.Length ~ .) %>%  
-#'      glimpse_na()         # end NA
-#'      
-#'    # or
-#'    iris_imputed <-
-#'      irisNA %?>% 
-#'      impute_const(Sepal.Width ~ 7) %?>% 
-#'      impute_cart(Sepal.Length ~ .)
-#'      
-#'    na_status(iris_imputed)  
-#' }
+#' irisNA <- iris
+#' irisNA[1:3,1] <- irisNA[3:7,2] <- NA
+#' 
+#' # How many NA's?
+#' na_status(irisNA)
+#' 
+#' # add an imputation method one at a time
+#' iris_imputed <-
+#'   irisNA |> 
+#'   glimpse_na() # same as above
+#' 
+#' # ok, glimpse_na says "Sepal.Width" has NA's
+#' # fix that:
+#' 
+#' iris_imputed <-
+#'   irisNA |> 
+#'   impute_const(Sepal.Width ~ 7) |> 
+#'   glimpse_na() # end NA
+#' 
+#' # Sepal.Length is having NA's
+#' 
+#' iris_imputed <-
+#'   irisNA |> 
+#'   impute_const(Sepal.Width ~ 7) |>
+#'   impute_cart(Sepal.Length ~ .) |>  
+#'   glimpse_na() # end NA
+#' 
+#' # in an existing imputation pipeline we can peek with
+#' # glimpse_na or %?>%
+#' 
+#' iris_imputed <-
+#'   irisNA |> 
+#'   glimpse_na() |>     # shows the begin NA
+#'   impute_const(Sepal.Width ~ 7) |> 
+#'   glimpse_na() |>     # after 1 imputation
+#'   impute_cart(Sepal.Length ~ .) |>  
+#'   glimpse_na()         # end NA
+#'   
+#' # or
+#' iris_imputed <-
+#'   irisNA %?>% 
+#'   impute_const(Sepal.Width ~ 7) %?>% 
+#'   impute_cart(Sepal.Length ~ .)
+#'   
+#' na_status(iris_imputed)  
+#' 
 #' @export
 glimpse_na <- function(x, show_only_missing = TRUE, ...){
   if (is.data.frame(x)){
