@@ -44,19 +44,14 @@ imputation methodology is supported.
 
 ### Installation
 
-The basic version of the package can be installed with 
+The latest release of the package can be installed as follows.
 ```{r,eval=FALSE}
 install.packages('simputation')
 ```
 
-The package uses several other packages for model building. To keep the package 
-lightweight, many of these are not installed immediately when you install
-simputation. To install all dependencies do
-```{r,eval=FALSE}
-install.packages('simputation', dependencies=TRUE)
-```
-Alternatively, one can manually install extra dependencies. Below is 
-an overview of what packages are used.
+This package is a wrapper package. It stands on the shoulders of some great packages
+that other authors have provided. Below is an overview of the packages that make
+imputation with `simputation` possible.
 
 ```{r,echo=FALSE}
 knitr::kable(
@@ -69,12 +64,6 @@ knitr::kable(
   )
 )
 ```
-
-Packages available in the R recommended suite are installed by default when R is
-installed (unless this was explicitly prevented at installation). Hotdeck 
-imputation (knn, rhd, shd) have their own implementations in simputation. The
-`VIM` package can be used as an optional backend for these.
-
 
 
 ### General remarks
