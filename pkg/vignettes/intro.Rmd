@@ -135,14 +135,13 @@ head(da3,10)
 
 ### Chaining imputation methods
 
-Using the `%>%` operator from the popular [magrittr](https://cran.r-project.org/package=magrittr) allows for a very compact
+Using the `|>` operator (R 4.0.0 or later) allows for a very compact
 specification of the above examples. 
 
 ```{r, eval=FALSE}
-library(magrittr)
-da4 <- dat %>% 
-  impute_lm(Sepal.Length ~ Sepal.Width + Species) %>%
-  impute_median(Sepal.Length ~ Species) %>%
+da4 <- dat |> 
+  impute_lm(Sepal.Length ~ Sepal.Width + Species) |>
+  impute_median(Sepal.Length ~ Species) |>
   impute_cart(Species ~ .)
 ```
 
@@ -197,7 +196,7 @@ library(dplyr)
 dat <- iris
 dat[1:3,1] <- dat[3:7,2] <- NA
 
-dat %>% group_by(Species) %>% 
+dat |> group_by(Species) |> 
   impute_lm(Sepal.Length ~ Petal.Width)
 ```
 
