@@ -1,7 +1,7 @@
 
 
 ## presence of suggested packages
-dummy <- capture.output(simputation_suggests())
+expect_message(simputation_suggests())
 
 
 ## stop at grouping error
