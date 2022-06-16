@@ -36,16 +36,8 @@ revdep: doc
 	R -s -e "out <- tools::check_packages_in_dir('revcheck',reverse=list(which='most'),Ncpus=3); print(summary(out)); saveRDS(out, file='revcheck/output.RDS')"
 
 introduction:
-	R -s -e "rmarkdown::render('pkg/vignettes/introduction.Rmd')"
-	xdg-open pkg/vignettes/introduction.html
-
-indicators:
-	R -s -e "rmarkdown::render('pkg/vignettes/indicators.Rmd')"
-	xdg-open pkg/vignettes/indicators.html
-
-rule_files:
-	R -s -e "rmarkdown::render('pkg/vignettes/rule_files.Rmd')"
-	xdg-open pkg/vignettes/rule_files.html
+	R -s -e "rmarkdown::render('pkg/vignettes/intro.Rmd')"
+	xdg-open pkg/vignettes/intro.html
 
 clean:
 	rm -rf revdep
