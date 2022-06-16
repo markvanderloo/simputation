@@ -531,10 +531,10 @@ impute_knn <- function(dat, formula
     if (length(groups(dat, formula)) > 0){
       message("VIM does not support grouping. Ignoring grouping variables")
     }
-    knn_vim(data=dat
+    return(knn_vim(data=dat
       , variable = get_imputed(formula, dat)
       , dist_var = get_predictors(formula, dat)
-      , k=k , ... )
+      , k=k , ... ))
   }
   
   pool <- match.arg(pool)
