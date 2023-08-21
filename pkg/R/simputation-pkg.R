@@ -7,6 +7,7 @@
 #' 
 #' @name simputation
 #' @docType package
+#' @aliases simputation-package
 #' @import  stats
 #' @importFrom MASS rlm 
 #' @importFrom utils installed.packages
