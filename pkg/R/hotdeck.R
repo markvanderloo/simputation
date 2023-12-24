@@ -196,7 +196,7 @@ impute_rhd <- function(dat, formula, pool=c("complete","univariate","multivariat
   
   idat <- dat[predicted]
   # ugly construction, but fast.
-  prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)!=nrow(dat)); prob}
+  prob <- if (missing(prob)) rep(1,nrow(dat)) else {stopifnot(length(prob)==nrow(dat)); prob}
   idat$PROB..TMP <- prob
 
   spl <- if (length(predictors) > 0) dat[predictors] else data.frame(split=rep(1,nrow(dat)))
