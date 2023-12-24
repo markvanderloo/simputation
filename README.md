@@ -1,6 +1,5 @@
 
-[![Build Status](https://travis-ci.org/markvanderloo/simputation.svg?branch=master)](https://travis-ci.org/markvanderloo/simputation)
-[![Coverage Status](https://coveralls.io/repos/github/markvanderloo/simputation/badge.svg?branch=master)](https://coveralls.io/github/markvanderloo/simputation?branch=master)
+
 [![CRAN](http://www.r-pkg.org/badges/version/simputation)](https://CRAN.R-project.org/package=simputation)[![status](https://tinyverse.netlify.com/badge/simputation)](https://CRAN.R-project.org/package=simputation)
 [![Downloads](http://cranlogs.r-pkg.org/badges/simputation)](https://CRAN.R-project.org/package=simputation)[![Mentioned in Awesome Official Statistics ](https://awesome.re/mentioned-badge.svg)](http://www.awesomeofficialstatistics.org)
 
@@ -48,7 +47,7 @@ make install
 Create some data suffering from missings
 ```r
 library(simputation) # current package
-library(magrittr)    # for the %>% not-a-pipe operator
+
 dat <- iris
 # empty a few fields
 dat[1:3,1] <- dat[3:7,2] <- dat[8:10,5] <- NA
@@ -56,9 +55,9 @@ head(dat,10)
 ```
 Now impute `Sepal.Length` and `Sepal.Width` by regression on `Petal.Length` and `Species`, and impute `Species` using a CART model, that uses all other variables (including the imputed variables in this case).
 ```r
-dat %>% 
-  impute_lm(Sepal.Length + Sepal.Width ~ Petal.Length + Species) %>%
-  impute_cart(Species ~ .) %>% # use all variables except 'Species' as predictor
+dat |>
+  impute_lm(Sepal.Length + Sepal.Width ~ Petal.Length + Species) |>
+  impute_cart(Species ~ .) |> # use all variables except 'Species' as predictor
   head(10)
 ```
 
