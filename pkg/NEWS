@@ -1,5 +1,7 @@
 version 0.2.9
-- Fixed Rd bug (thanks to Kurt Hornik for pointing out the changes) 
+- Fixed Rd bug (thanks to Kurt Hornik for pointing out the changes).
+- Fixed bug in random hot deck (Thanks to GH user sfhalapour for 
+  the PR).
 
 version 0.2.8
 - Package now depends on R >= 4.0.0
