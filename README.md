@@ -64,7 +64,6 @@ dat %>%
 
 ### Materials
 
-- A [blogpost](http://www.markvanderloo.eu/yaRb/2016/09/13/announcing-the-simputation-package-make-imputation-simple/) introducing the package
 - The introductory [vignette](https://cran.r-project.org/web/packages/simputation/vignettes/intro.html)
-- [slides](http://www.markvanderloo.eu/files/statistics/user2017markvanderloo.pdf) from my [useR2017](https://user2017.brussels/) talk.
+- [slides](https://markvanderloo.eu/files/share/loo2017easy.pdf) from my [useR2017](https://user2017.brussels/) talk.
 
