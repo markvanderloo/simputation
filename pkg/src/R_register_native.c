@@ -17,7 +17,7 @@
 extern SEXP pmm_impute_dbl(SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"pmm_impute_dbl", (DL_FUNC) &pmm_impute_dbl, 2},
+    {"pmm_impute_dbl", (DL_FUNC) &pmm_impute_dbl, 3},
     {NULL, NULL, 0}
 };
 

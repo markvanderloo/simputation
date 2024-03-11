@@ -423,8 +423,8 @@ multi_shd <- function(x){
 
 #' @rdname impute_hotdeck
 #' @param predictor \code{[function]} Imputation to use for predictive part in
-#'   predictive mean matching. Any of the \code{impute_} functions of this
-#'   package (it makes no sense to use a hot-deck imputation).
+#'   predictive mean matching. Any \code{impute_} function of this package that
+#'   supports the \code{impute_all} argument can be used.
 #' 
 #' @export
 impute_pmm <- function(dat, formula, predictor=impute_lm
@@ -432,6 +432,14 @@ impute_pmm <- function(dat, formula, predictor=impute_lm
   
   # input check
   stopifnot(inherits(formula,"formula"))
+  is_valid_predictor <- "impute_all" %in% names(formals(predictor))
+  if (!is_valid_predictor) {
+    error_fmt <- paste(
+      "Cannot use '%s' as predictor for predictive mean matching."
+      , "Predictor function must support the 'impute_all' argument."
+    )
+    stopf(error_fmt, deparse(substitute(predictor)))
+  }
   pool <- match.arg(pool)
 
   # generate predictions by imputing with the 'predictor' function.
@@ -444,40 +452,43 @@ pmm_work <- function(dat, formula, predictor=impute_lm
                        , pool=c('complete','univariate','multivariate'), ...){
   
   # generate predictions by imputing with the 'predictor' function.
-  idat <- predictor(dat=dat,formula=formula,...)
+  idat <- predictor(dat = dat, formula = formula, impute_all = TRUE, ...)
   predicted <- get_imputed(formula, dat)
-  predicted <- names(dat) %in% predicted
+
   # call appropriate workhorse imputation function
   switch(pool
      , complete = multi_cc_pmm(dat,idat,predicted, TRUE)
      , univariate = single_pmm(dat,idat,predicted)
      , multivariate = multi_cc_pmm(dat,idat,predicted,FALSE)
   )
-  
 }
-
-
-
 
 # dat: original data
 # idat: formula-imputed data
-# predicted [logical] which variables have been imputed
-single_pmm <- function(dat, idat, predicted){
-  for ( p in which(predicted) ){
-    don <- dat[!is.na(dat[,p]),p]
-    iimp <- is.na(dat[,p]) & !is.na(idat[,p])
-    if ( length(don)==0 || sum(iimp)==0) next # no donors, or nothing to impute
-    idat[iimp,p] <- .Call("pmm_impute_dbl",as.double(idat[iimp,p]),as.double(don))
+# predicted [character]: variables imputed in idat
+single_pmm <- function(dat, idat, predicted) {
+  for (p in predicted) {
+    # Get logical vectors for donor rows and rows to impute.
+    is_donor = !is.na(dat[, p])
+    i <- !is_donor & !is.na(idat[, p])
+    if (!any(is_donor) || !any(i)) {
+      next  # No donors or nothing to impute.
+    }
+    # Impute donor values into dat[i, p].
+    dat[i, p] <- .Call("pmm_impute_dbl"
+      , as.double(idat[i, p])         # imputed recipients
+      , as.double(idat[is_donor, p])  # imputed donors
+      , as.double(dat[is_donor, p])   # actual donors
+    )
   } 
-  idat
+  dat
 }
 
 # dat: original data
 # idat: formula-imputed data
-# predicted [logical] which variables have been imputed
-# only_complete:[logical] TRUE: complete cases only, FALSE: by missingness pattern
-# (only_complete=FALSE)
-multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
+# predicted [character]: variables imputed in idat
+# only_complete [logical]: TRUE: complete cases only, FALSE: by missingness pattern
+multi_cc_pmm <- function(dat, idat, predicted, only_complete = TRUE) {
   M <- is.na(dat) & !is.na(idat)
   # get missing data patterns 
   mdp <- unique(M)
@@ -495,9 +506,10 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
     if (!any(donor_pool)||all(donor_pool)) next 
     # recycle over columns of M to find recipients with pattern 'pat'
     recipients <- colSums(M==pat) == length(pat)
-    # get closest match (scaled L1 distance)
-    topn <- gower::gower_topn(idat[recipients,pat,drop=FALSE]
-                  , dat[donor_pool,pat,drop=FALSE], n=1L)
+    # Get index of closest match of imputed values (scaled L1 distance).
+    topn <- gower::gower_topn(idat[recipients, pat, drop = FALSE]
+                            , idat[donor_pool, pat, drop = FALSE]
+                            , n = 1L)
     # index from donor pool to actual dataset
     j <- which(donor_pool)[topn$index]
     # impute the bastard; update imputation administration
@@ -506,8 +518,6 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
   }
   dat
 }
-
-
 
 
 # ------------------------------------------------------------------------------
