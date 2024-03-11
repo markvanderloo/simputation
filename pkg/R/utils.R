@@ -239,6 +239,16 @@ get_predictors <- function(frm, dat, one_ok = FALSE){
 }
 
 
+# Get residual vector of length nmiss.
+get_res <- function(nmiss, residuals, type){
+  switch(type
+     , none = rep(0,nmiss)
+     , observed = sample(x = residuals, size=nmiss, replace=TRUE)
+     , normal = rnorm(n=nmiss, mean=mean(residuals), sd=sd(residuals))
+  )
+}
+
+
 #' @export
 rpart::na.rpart
 
