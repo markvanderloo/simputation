@@ -135,18 +135,26 @@ has_groups <- function(frm){
 }
 
 # get groups
-groups <- function(dat, frm){
-  grp <- character()
-  # dplyr compatability:
-  if (inherits(dat,"grouped_df")){
-   grp <- sapply(attr(dat,"vars"), as.character)
+groups <- function(dat, frm) {
+  # dplyr groups
+  dat_groups <- if (requireNamespace("dplyr", quietly = TRUE)) {
+    dplyr::group_vars(dat)
+  } else {
+    if (inherits(dat, "grouped_df")) {
+      warning("Dataframe is grouped but dplyr is not available. Ignoring dataframe groups.", call. = FALSE)
+    }
+    character()
   }
-  # also take grouping from formula
-  if (has_groups(frm)){
+
+  # formula groups
+  frm_groups <- if (has_groups(frm)) {
     n <- length(frm)
-    grp <- c(grp,all.vars(frm[[n]][[3]]))
+    all.vars(frm[[n]][[3]])
+  } else {
+    character()
   }
-  unique(grp)
+
+  unique(c(dat_groups, frm_groups))
 }
 
 # remove group statement from formula
