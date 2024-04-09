@@ -468,17 +468,23 @@ pmm_work <- function(dat, formula, predictor=impute_lm
 # predicted [character]: variables imputed in idat
 single_pmm <- function(dat, idat, predicted) {
   for (p in predicted) {
-    # Get logical vectors for donor rows and rows to impute.
-    is_donor = !is.na(dat[, p])
-    i <- !is_donor & !is.na(idat[, p])
-    if (!any(is_donor) || !any(i)) {
+    is_na_dat <- is.na(dat[, p])
+    is_na_idat <- is.na(idat[, p])
+    # Get logical vectors with donor and recipient rows.
+    # Note that idat[, p] can have missings in records where dat[, p] does not.
+    # Such records should not be selected as donor. This can be handled when
+    # calculating the distance between imputed recipient and potential donor,
+    # but it is more robust to exclude these records from the donor pool here.
+    is_donor <- !is_na_dat & !is_na_idat
+    is_recipient <- is_na_dat & !is_na_idat
+    if (!any(is_donor) || !any(is_recipient)) {
       next  # No donors or nothing to impute.
     }
-    # Impute donor values into dat[i, p].
-    dat[i, p] <- .Call("pmm_impute_dbl"
-      , as.double(idat[i, p])         # imputed recipients
-      , as.double(idat[is_donor, p])  # imputed donors
-      , as.double(dat[is_donor, p])   # actual donors
+    # Impute donor values into recipients.
+    dat[is_recipient, p] <- .Call("pmm_impute_dbl"
+      , as.double(idat[is_recipient, p])  # imputed recipients
+      , as.double(idat[is_donor, p])      # imputed donors
+      , as.double(dat[is_donor, p])       # actual donors
     )
   } 
   dat
@@ -489,32 +495,46 @@ single_pmm <- function(dat, idat, predicted) {
 # predicted [character]: variables imputed in idat
 # only_complete [logical]: TRUE: complete cases only, FALSE: by missingness pattern
 multi_cc_pmm <- function(dat, idat, predicted, only_complete = TRUE) {
-  M <- is.na(dat) & !is.na(idat)
+  is_na_dat <- is.na(dat)
+  is_na_idat <- is.na(idat)
+  # Get positions of missings in dat that have been imputed in idat.
+  # These are the positions where we want to impute values with pmm.
+  # Note that idat only differs from dat in predicted variables, meaning that
+  # all values of M outside of predicated variables are FALSE.
+  M <- is_na_dat & !is_na_idat
   # get missing data patterns 
   mdp <- unique(M)
+  # Transpose of M is used to find rows that match a missing data pattern.
   M <- t(M)
-  imputed <- logical(nrow(dat))
-  if (only_complete) donor_pool <- complete.cases(dat[predicted])
-  for ( i in seq_len(nrow(mdp))){
+  # Get positions of potential donor values.
+  is_donor_val <- !is_na_dat & !is_na_idat
+  if (only_complete) {
+    # Donors are rows of the data that are complete for all predicted vars.
+    is_donor_row <- rowSums(is_donor_val[, predicted, drop = FALSE]) == length(predicted)
+  }
+  for (i in seq_len(nrow(mdp))) {
     # get missing data pattern for imputed variables
     pat <- mdp[i,]
-    # skip if that leaves us with nothing
-    if (!any(pat)) next
-    # only donors that have not been imputed earlier
-    if(!only_complete) donor_pool <- complete.cases(dat[pat]) & !imputed
-    # no donors or nothing to impute: skip.
-    if (!any(donor_pool)||all(donor_pool)) next 
-    # recycle over columns of M to find recipients with pattern 'pat'
-    recipients <- colSums(M==pat) == length(pat)
+    if (!any(pat)) {
+      next  # No missings in pattern, nothing to impute.
+    }
+    if (!only_complete) {
+      # Donors are rows of the data that are complete for pat.
+      is_donor_row <- rowSums(is_donor_val[, pat, drop = FALSE]) == sum(pat)
+    }
+    if (!any(is_donor_row)) {
+      next  # Cannot impute without donors.
+    }
+    # Recipient rows are those rows of the data that match pat.
+    is_recipient <- colSums(M == pat) == length(pat)
     # Get index of closest match of imputed values (scaled L1 distance).
-    topn <- gower::gower_topn(idat[recipients, pat, drop = FALSE]
-                            , idat[donor_pool, pat, drop = FALSE]
+    topn <- gower::gower_topn(idat[is_recipient, pat, drop = FALSE]
+                            , idat[is_donor_row, pat, drop = FALSE]
                             , n = 1L)
     # index from donor pool to actual dataset
-    j <- which(donor_pool)[topn$index]
-    # impute the bastard; update imputation administration
-    dat[recipients,pat] <- dat[j,pat]
-    imputed <- imputed | recipients
+    j <- which(is_donor_row)[topn$index]
+    # Impute donor values into recipients.
+    dat[is_recipient, pat] <- dat[j, pat]
   }
   dat
 }

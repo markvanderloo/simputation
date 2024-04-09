@@ -79,7 +79,7 @@ expect_equal(impute_pmm(dat, y + z ~ x, pool="univariate"), expected_result)
 expected_result <- data.frame(
   x = c(1.0, 2.0, 3.0, 3.0, 3.1, 5.0)
   , y = c(0.9, 2.1, 2.4, 2.1, 2.4, 4.9)
-  , z = c(2.2, 3.8, 4.2, 3.8, 3.8, 10.1)
+  , z = c(2.2, 3.8, 4.2, 3.8, 4.2, 10.1)
 )
 expect_equal(impute_pmm(dat, y + z ~ x, pool="multivariate"), expected_result)
 
@@ -133,6 +133,42 @@ expect_error(impute_pmm(dat, formula, predictor = impute_median), pattern = "Can
 # Treemodel predictors not supported for pmm.
 expect_error(impute_pmm(dat, formula, predictor = impute_cart), pattern = "Cannot use 'impute_cart' as predictor")
 expect_error(impute_pmm(dat, formula, predictor = impute_rf), pattern = "Cannot use 'impute_rf' as predictor")
+
+## pmm-imputation: test NA in predictor result
+dat <- iris[1:15, ]
+dat[1, "Petal.Length"] <- NA
+dat[2, "Petal.Width"] <- NA
+dat[8, "Sepal.Length"] <- NA
+dat[9, "Sepal.Width"] <- NA
+expected_result <- dat
+expected_result[8, "Sepal.Length"] <- 4.6
+expected_result[9, "Sepal.Width"] <- 3.6
+formula <- Sepal.Length + Sepal.Width ~ Petal.Length + Petal.Width
+expect_equal(impute_pmm(dat, formula, pool = "univariate"), expected_result)
+expect_equal(impute_pmm(dat, formula, pool = "multivariate"), expected_result)
+expect_equal(impute_pmm(dat, formula, pool = "complete"), expected_result)
+
+## pmm-imputation: test many NAs, leaving 0 donors for the "complete" option.
+dat <- iris[1:12, ]
+dat[1:2, "Petal.Length"] <- NA
+dat[3:4, "Petal.Width"] <- NA
+dat[c(1, 5:7, 11:12), "Sepal.Length"] <- NA
+dat[c(3, 8:12), "Sepal.Width"] <- NA
+expected_result <- dat
+expected_result[8, "Sepal.Length"] <- 4.6
+expected_result[9, "Sepal.Width"] <- 3.6
+formula <- Sepal.Length + Sepal.Width ~ Petal.Length + Petal.Width
+
+expected_result <- dat
+expected_result[is.na(dat["Sepal.Length"]), "Sepal.Length"] <- c(NA, 4.4, 5.0, 4.4, 5.0, 5.0)
+expected_result[is.na(dat["Sepal.Width"]), "Sepal.Width"] <- c(NA, 3.9, 3.6, 3.9, 3.9, 3.9)
+expect_equal(impute_pmm(dat, formula, pool = "univariate"), expected_result)
+expected_result <- dat
+expected_result[is.na(dat["Sepal.Length"]), "Sepal.Length"] <- c(NA, 4.4, 5.0, 4.4, NA, NA)
+expected_result[is.na(dat["Sepal.Width"]), "Sepal.Width"] <- c(NA, 3.9, 3.6, 3.9, NA, NA)
+expect_equal(impute_pmm(dat, formula, pool = "multivariate"), expected_result)
+expected_result <- dat
+expect_equal(impute_pmm(dat, formula, pool = "complete"), expected_result)
 
 
 ## grouped imputation
