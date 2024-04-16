@@ -13,6 +13,5 @@
 #' @importFrom utils installed.packages
 #' @importFrom rpart rpart prune na.rpart
 #' @importFrom gower gower_topn
-#' @useDynLib simputation, .registration=TRUE
 {}
 

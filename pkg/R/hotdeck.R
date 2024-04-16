@@ -475,17 +475,19 @@ single_pmm <- function(dat, idat, predicted) {
     # Such records should not be selected as donor. This can be handled when
     # calculating the distance between imputed recipient and potential donor,
     # but it is more robust to exclude these records from the donor pool here.
-    is_donor <- !is_na_dat & !is_na_idat
-    is_recipient <- is_na_dat & !is_na_idat
-    if (!any(is_donor) || !any(is_recipient)) {
+    is_donor_row <- !is_na_dat & !is_na_idat
+    is_recipient_row <- is_na_dat & !is_na_idat
+    if (!any(is_donor_row) || !any(is_recipient_row)) {
       next  # No donors or nothing to impute.
     }
+    # For each recipient, get index of closest donor (scaled L1 distance).
+    topn <- gower::gower_topn(idat[is_recipient_row, p, drop = FALSE]
+                            , idat[is_donor_row, p, drop = FALSE]
+                            , n = 1L)
+    # Translate donor indices to indices in the full data set.
+    j <- which(is_donor_row)[topn$index]
     # Impute donor values into recipients.
-    dat[is_recipient, p] <- .Call("pmm_impute_dbl"
-      , as.double(idat[is_recipient, p])  # imputed recipients
-      , as.double(idat[is_donor, p])      # imputed donors
-      , as.double(dat[is_donor, p])       # actual donors
-    )
+    dat[is_recipient_row, p] <- dat[j, p]
   } 
   dat
 }
@@ -526,15 +528,15 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete = TRUE) {
       next  # Cannot impute without donors.
     }
     # Recipient rows are those rows of the data that match pat.
-    is_recipient <- colSums(M == pat) == length(pat)
-    # Get index of closest match of imputed values (scaled L1 distance).
-    topn <- gower::gower_topn(idat[is_recipient, pat, drop = FALSE]
+    is_recipient_row <- colSums(M == pat) == length(pat)
+    # For each recipient, get index of closest donor (scaled L1 distance).
+    topn <- gower::gower_topn(idat[is_recipient_row, pat, drop = FALSE]
                             , idat[is_donor_row, pat, drop = FALSE]
                             , n = 1L)
-    # index from donor pool to actual dataset
+    # Translate donor indices to indices in the full data set.
     j <- which(is_donor_row)[topn$index]
     # Impute donor values into recipients.
-    dat[is_recipient, pat] <- dat[j, pat]
+    dat[is_recipient_row, pat] <- dat[j, pat]
   }
   dat
 }
