@@ -99,10 +99,12 @@ expected_result[8, "Sepal.Length"] <- 4.6
 expected_result[9, "Sepal.Width"] <- 3.5
 formula <- Sepal.Length + Sepal.Width ~ Petal.Length + Petal.Width
 
+# Test default predictor.
 expect_equal(impute_pmm(dat, formula, pool = "univariate"), expected_result)
 expect_equal(impute_pmm(dat, formula, pool = "multivariate"), expected_result)
 expect_equal(impute_pmm(dat, formula, pool = "complete"), expected_result)
 
+# Test linear model predictors.
 expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "univariate"), expected_result)
 expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "multivariate"), expected_result)
 expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "complete"), expected_result)
@@ -114,6 +116,16 @@ expect_equal(impute_pmm(dat, formula, predictor = impute_rlm, pool = "complete")
 expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "univariate"), expected_result)
 expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "multivariate"), expected_result)
 expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "complete"), expected_result)
+
+# Test tree model predictors.
+suppressWarnings(expect_error(impute_pmm(dat, formula, predictor = impute_cart, pool = "univariate"), "replacement has length zero"))
+suppressWarnings(expect_error(impute_pmm(dat, formula, predictor = impute_cart, pool = "multivariate"), "replacement has length zero"))
+suppressWarnings(expect_error(impute_pmm(dat, formula, predictor = impute_cart, pool = "complete"), "replacement has length zero"))
+
+set.seed(0)
+expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "univariate"), expected_result)
+expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "multivariate"), expected_result)
+expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "complete"), expected_result)
 
 # Hotdeck predictors not supported for pmm.
 expect_error(impute_pmm(dat, formula, predictor = impute_rhd), pattern = "Cannot use 'impute_rhd' as predictor")
@@ -129,10 +141,6 @@ expect_error(impute_pmm(dat, formula, predictor = impute_mf), pattern = "Cannot 
 expect_error(impute_pmm(dat, formula, predictor = impute_proxy), pattern = "Cannot use 'impute_proxy' as predictor")
 expect_error(impute_pmm(dat, formula, predictor = impute_const), pattern = "Cannot use 'impute_const' as predictor")
 expect_error(impute_pmm(dat, formula, predictor = impute_median), pattern = "Cannot use 'impute_median' as predictor")
-
-# Treemodel predictors not supported for pmm.
-expect_error(impute_pmm(dat, formula, predictor = impute_cart), pattern = "Cannot use 'impute_cart' as predictor")
-expect_error(impute_pmm(dat, formula, predictor = impute_rf), pattern = "Cannot use 'impute_rf' as predictor")
 
 ## pmm-imputation: test NA in predictor result
 dat <- iris[1:15, ]
