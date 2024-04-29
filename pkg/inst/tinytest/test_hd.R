@@ -105,27 +105,35 @@ expect_equal(impute_pmm(dat, formula, pool = "multivariate"), expected_result)
 expect_equal(impute_pmm(dat, formula, pool = "complete"), expected_result)
 
 # Test linear model predictors.
-expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "univariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "multivariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "complete"), expected_result)
+expected_result_lm <- expected_result
+expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "univariate"), expected_result_lm)
+expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "multivariate"), expected_result_lm)
+expect_equal(impute_pmm(dat, formula, predictor = impute_lm, pool = "complete"), expected_result_lm)
 
-expect_equal(impute_pmm(dat, formula, predictor = impute_rlm, pool = "univariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_rlm, pool = "multivariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_rlm, pool = "complete"), expected_result)
+expected_result_rlm <- expected_result
+expect_equal(impute_pmm(dat, formula, predictor = impute_rlm, pool = "univariate"), expected_result_rlm)
+expect_equal(impute_pmm(dat, formula, predictor = impute_rlm, pool = "multivariate"), expected_result_rlm)
+expect_equal(impute_pmm(dat, formula, predictor = impute_rlm, pool = "complete"), expected_result_rlm)
 
-expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "univariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "multivariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "complete"), expected_result)
+expected_result_en <- expected_result
+expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "univariate"), expected_result_en)
+expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "multivariate"), expected_result_en)
+expect_equal(impute_pmm(dat, formula, predictor = impute_en, pool = "complete"), expected_result_en)
 
 # Test tree model predictors.
-suppressWarnings(expect_error(impute_pmm(dat, formula, predictor = impute_cart, pool = "univariate"), "replacement has length zero"))
-suppressWarnings(expect_error(impute_pmm(dat, formula, predictor = impute_cart, pool = "multivariate"), "replacement has length zero"))
-suppressWarnings(expect_error(impute_pmm(dat, formula, predictor = impute_cart, pool = "complete"), "replacement has length zero"))
+# Note that cart predicts the same value for all records. This leads to the first row being picked as donor.
+expected_result_cart <- dat
+expected_result_cart[8, "Sepal.Length"] <- 5.1
+expected_result_cart[9, "Sepal.Width"] <- 3.5
+expect_equal(impute_pmm(dat, formula, predictor = impute_cart, pool = "univariate"), expected_result_cart)
+expect_equal(impute_pmm(dat, formula, predictor = impute_cart, pool = "multivariate"), expected_result_cart)
+expect_equal(impute_pmm(dat, formula, predictor = impute_cart, pool = "complete"), expected_result_cart)
 
 set.seed(0)
-expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "univariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "multivariate"), expected_result)
-expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "complete"), expected_result)
+expected_result_rf <- expected_result
+expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "univariate"), expected_result_rf)
+expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "multivariate"), expected_result_rf)
+expect_equal(impute_pmm(dat, formula, predictor = impute_rf, pool = "complete"), expected_result_rf)
 
 # Hotdeck predictors not supported for pmm.
 expect_error(impute_pmm(dat, formula, predictor = impute_rhd), pattern = "Cannot use 'impute_rhd' as predictor")

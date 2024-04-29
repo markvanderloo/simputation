@@ -480,12 +480,19 @@ single_pmm <- function(dat, idat, predicted) {
     if (!any(is_donor_row) || !any(is_recipient_row)) {
       next  # No donors or nothing to impute.
     }
-    # For each recipient, get index of closest donor (scaled L1 distance).
-    topn <- gower::gower_topn(idat[is_recipient_row, p, drop = FALSE]
-                            , idat[is_donor_row, p, drop = FALSE]
-                            , n = 1L)
+    # For each recipient, get index of closest donor using gower_topn().
+    # Note that gower_topn() cannot handle the variable p having 0 range.
+    closest_donor_idx <- if (calc_range(idat[, p]) == 0) {
+      # Impute the first donor value. This is consistent with the behaviour of
+      # gower_topn(), which returns the lowest index of equal values (for n=1).
+      1
+    } else {
+      gower::gower_topn(idat[is_recipient_row, p, drop = FALSE]
+                        , idat[is_donor_row, p, drop = FALSE]
+                        , n = 1L)$index
+    }
     # Translate donor indices to indices in the full data set.
-    j <- which(is_donor_row)[topn$index]
+    j <- which(is_donor_row)[closest_donor_idx]
     # Impute donor values into recipients.
     dat[is_recipient_row, p] <- dat[j, p]
   } 
@@ -529,16 +536,34 @@ multi_cc_pmm <- function(dat, idat, predicted, only_complete = TRUE) {
     }
     # Recipient rows are those rows of the data that match pat.
     is_recipient_row <- colSums(M == pat) == length(pat)
-    # For each recipient, get index of closest donor (scaled L1 distance).
-    topn <- gower::gower_topn(idat[is_recipient_row, pat, drop = FALSE]
-                            , idat[is_donor_row, pat, drop = FALSE]
-                            , n = 1L)
+    # For each recipient, get index of closest donor using gower_topn().
+    # Note that gower_topn() cannot handle all variables in pat having 0 range.
+    is_range_0 <- (sapply(idat[, pat, drop = FALSE], calc_range) == 0)
+    closest_donor_idx <- if (all(is_range_0)) {
+      # Impute the first donor value. This is consistent with the behaviour of
+      # gower_topn(), which returns the lowest index of equal values (for n=1).
+      1
+    } else {
+      gower::gower_topn(idat[is_recipient_row, pat, drop = FALSE]
+                        , idat[is_donor_row, pat, drop = FALSE]
+                        , n = 1L)$index
+    }
     # Translate donor indices to indices in the full data set.
-    j <- which(is_donor_row)[topn$index]
+    j <- which(is_donor_row)[closest_donor_idx]
     # Impute donor values into recipients.
     dat[is_recipient_row, pat] <- dat[j, pat]
   }
   dat
+}
+
+# Calculate the range of a vector v, i.e., the difference between max and min.
+# Note that v is assumed to have at least one non-NA value.
+calc_range <- function(v) {
+  range <- max(v, na.rm = TRUE) - min(v, na.rm = TRUE)
+  if (!is.finite(range)) {
+    stop("Failed to calculate range.")
+  }
+  range
 }
 
 
