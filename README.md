@@ -1,6 +1,6 @@
 
 
-[![CRAN](http://www.r-pkg.org/badges/version/simputation)](https://CRAN.R-project.org/package=simputation)[![status](https://tinyverse.netlify.com/badge/simputation)](https://CRAN.R-project.org/package=simputation)
+[![CRAN](http://www.r-pkg.org/badges/version/simputation)](https://CRAN.R-project.org/package=simputation)[![status](https://tinyverse.netlify.app/badge/simputation)](https://CRAN.R-project.org/package=simputation)
 [![Downloads](http://cranlogs.r-pkg.org/badges/simputation)](https://CRAN.R-project.org/package=simputation)[![Mentioned in Awesome Official Statistics ](https://awesome.re/mentioned-badge.svg)](http://www.awesomeofficialstatistics.org)
 
 
