@@ -110,3 +110,19 @@ out <- impute_lm(irisNA, .-Sepal.Width ~ 0 + Sepal.Width, weights=1/iris$Sepal.L
 expect_equal(sum(is.na(out)),0)
 
 
+## Test impute_all = TRUE
+dat <- iris[1:7, ]
+dat[1, "Sepal.Length"] <- NA
+dat[2, "Sepal.Width"] <- NA
+dat[3, "Petal.Length"] <- NA
+dat[4, "Petal.Width"] <- NA
+expected_result <- dat
+expected_result["Sepal.Length"] <- c(4.95, 4.95, NA, NA, 4.95, 5.40, 4.60)
+expected_result["Sepal.Width"] <- c(3.55, 3.55, NA, NA, 3.55, 3.90, 3.40)
+formula <- Sepal.Length + Sepal.Width ~ Petal.Length + Petal.Width
+expect_equal(impute_lm(dat, formula, impute_all = TRUE), expected_result)
+expect_equal(impute_rlm(dat, formula, impute_all = TRUE), expected_result)
+expected_result <- dat
+expected_result["Sepal.Length"] <- c(4.961, 4.961, NA, NA, 4.961, 5.386, 4.653)
+expected_result["Sepal.Width"] <- c(3.525, 3.525, NA, NA, 3.525, 3.883, 3.468)
+expect_equal(impute_en(dat, formula, impute_all = TRUE), expected_result, tolerance = 1e-3)

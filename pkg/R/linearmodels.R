@@ -14,10 +14,12 @@
 #'   zero in most cases). If \code{add_residual = "observed"}, residuals are drawn
 #'   (with replacement) from the model's residuals. Ignored for non-numeric 
 #'   predicted variables.
-#'  
 #' @param na_action \code{[function]} what to do with missings in training data.
 #'   By default cases with missing values in predicted or predictors are omitted
 #'   (see `Missings in training data').
+#' @param impute_all \code{[logical]} If FALSE (default) then only missings in
+#'   predicted variables are imputed. If TRUE, predictions are imputed for all
+#'   records and if a prediction cannot be made then NA is imputed.
 #' @param ... further arguments passed to 
 #' \itemize{
 #' \item{\code{\link[stats]{lm}} for \code{impute_lm}}
@@ -114,21 +116,22 @@
 #' @family imputation
 #' @export
 impute_lm <- function(dat, formula, add_residual = c("none","observed","normal")
-                      ,na_action=na.omit, ...){
+                      , na_action=na.omit, impute_all=FALSE, ...){
     add_residual <- match.arg(add_residual)
     do_by(dat, groups(dat,formula), .fun=lmwork
           , formula=remove_groups(formula), add_residual=add_residual, fun=lm
-          , na.action=na_action, ...)
+          , na.action=na_action, impute_all=impute_all, ...)
 }
 
 
 #' @rdname impute_lm
 #' @export
-impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"), na_action=na.omit,...){
+impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal")
+                       , na_action=na.omit, impute_all=FALSE,...){
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=lmwork
     , formula=remove_groups(formula), add_residual=add_residual, MASS::rlm
-    , na.action=na_action, ...)
+    , na.action=na_action, impute_all=impute_all, ...)
 }
 
 
@@ -149,7 +152,7 @@ impute_rlm <- function(dat, formula, add_residual = c("none","observed","normal"
 #' @export
 impute_en <- function(dat, formula
       , add_residual = c("none","observed","normal")
-      , na_action=na.omit, family=c("gaussian","poisson"), s = 0.01, ...){
+      , na_action=na.omit, impute_all=FALSE, family=c("gaussian","poisson"), s = 0.01, ...){
 
   if (not_installed("glmnet")) return(dat)
     
@@ -158,7 +161,7 @@ impute_en <- function(dat, formula
   do_by(dat, groups(dat,formula), .fun=lmwork
         , formula=remove_groups(formula)
         , add_residual=add_residual, fun=fdglmnet
-        , na.action=na_action, family=family, s=s, ...)
+        , na.action=na_action, impute_all=impute_all, family=family, s=s, ...)
   
 }
 
@@ -216,44 +219,28 @@ fdglmnet <- function(formula, data, na.action=na.omit, family, s, ...)
 }
 
 
+# Impute values based on linear modeling function fun for a single group.
+lmwork <- function(dat, formula, add_residual, fun, na.action, impute_all, ...) {
+  stopifnot(inherits(formula, "formula"))
 
-
-lmwork <- function(dat, formula, add_residual, fun, na.action, ...){
-  stopifnot(inherits(formula,"formula"))
-
+  # Get all numeric target variables. Non-numeric targets are not imputed.
   predicted <- get_imputed(formula, dat)
   predicted <- predicted[sapply(dat[predicted], is.numeric)]
-  formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
-  
-  for ( i in seq_along(predicted) ){
-    p <- predicted[i]
-    ina <- is.na(dat[,p])
-    nmiss <- sum(ina)
-    if (!any(ina) ) next # skip if no missings
-    m <- run_model(fun, formula=as.formula(formulas[i]), data=dat,na.action=na.action,...)
-    res <- get_res(nmiss = sum(ina), residuals = residuals(m), type = add_residual)
-    dat[ina, p] <- stats::predict(m, newdat = dat[ina,,drop=FALSE]) + res
+
+  # Iterate over target variables to impute each of them.
+  for (p in predicted) {
+    # Get logical vector for rows to impute.
+    i <- if (impute_all) rep(TRUE, nrow(dat)) else is.na(dat[, p])
+    if (!any(i)) {
+      next  # Skip if nothing to impute.
+    }
+
+    # Build model for p and use it to impute dat[i, p].
+    p_formula <- as.formula(paste(p, "~" , deparse(formula[[3]])))
+    m <- run_model(fun, formula = p_formula, data = dat,na.action = na.action, ...)
+    res <- get_res(nmiss = sum(i), residuals = residuals(m), type = add_residual)
+    dat[i, p] <- stats::predict(m, newdat = dat[i, , drop = FALSE]) + res
   }
+
   dat
-  
 }
-
-
-
-
-
-
-
-
-
-
-get_res <- function(nmiss, residuals, type){
-  switch(type
-     , none = rep(0,nmiss)
-     , observed = sample(x = residuals, size=nmiss, replace=TRUE)
-     , normal = rnorm(n=nmiss, mean=mean(residuals), sd=sd(residuals))
-  )
-}
-
-
-

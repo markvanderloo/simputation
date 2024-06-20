@@ -1,3 +1,10 @@
+version 0.2.10
+- Added a new impute_all option to linear and tree model imputation functions,
+  to support predictive mean matching imputation.
+- Fixed predictive mean matching imputation. (Thanks to Susie Jentoft for
+  reporting.) Note that predictive mean matching can now only be used with
+  predictors that support the impute_all option.
+
 version 0.2.9
 - Fixed Rd bug (thanks to Kurt Hornik for pointing out the changes).
 - Fixed bug in random hot deck (Thanks to GH user sfhalapour for 
@@ -17,7 +24,6 @@ version 0.2.7
 version 0.2.6
 - Fixed error in 'impute_shd' caused by VIM update.
 
-
 version 0.2.5
 - CRAN-requested update, avoiding misuse of 'order' on data.frames
   (Thanks to Kurt Hornik for reporting).
@@ -31,7 +37,6 @@ version 0.2.4
 - Fix: Column names with spaces were not handled properly (Thanks to Miles
   McBain)
 - Fix: 'impute_proxy' would crash when imputing a character constant.
-
 
 version 0.2.3
 - switched to 'tinytest' testing framework

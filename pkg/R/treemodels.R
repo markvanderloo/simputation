@@ -21,6 +21,9 @@
 #' @param na_action \code{[function]} what to do with missings in training data.
 #'   By default cases with missing values in predicted or predictors are omitted
 #'   (see `Missings in training data').
+#' @param impute_all \code{[logical]} If FALSE (default) then only missings in
+#'   predicted variables are imputed. If TRUE, predictions are imputed for all
+#'   records and if a prediction cannot be made then NA is imputed.
 #' @param ... further arguments passed to 
 #' \itemize{
 #' \item{\code{\link[rpart]{rpart}} for \code{impute_cart}}
@@ -71,20 +74,20 @@
 #' @family imputation
 #' @export
 impute_cart <- function(dat, formula, add_residual=c("none","observed","normal"), cp,
-                        na_action=na.rpart, ...){
+                        na_action=na.rpart, impute_all=FALSE, ...){
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
   do_by(dat, groups(dat,formula), .fun=cart_work
         , formula=remove_groups(formula)
         , add_residual=add_residual
-        , cp , na_action=na_action, ...)
+        , cp, na_action=na_action, impute_all=impute_all, ...)
 }
 
-cart_work <- function(dat, formula, add_residual, cp, na_action, ...){
+cart_work <- function(dat, formula, add_residual, cp, na_action, impute_all, ...){
 
   predicted <- get_imputed(formula, dat)
-  formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
 
+  # Set complexity parameter based on function argument.
   cp <- if (missing(cp)){
     rep(0,length(predicted))
   } else {
@@ -98,18 +101,26 @@ cart_work <- function(dat, formula, add_residual, cp, na_action, ...){
     }
   }
   names(cp) <- predicted
-  for (i in seq_along(predicted)){
-    p <- predicted[i]
-    ina <- is.na(dat[,p])
-    m <- run_model(rpart, formula = as.formula(formulas[i]), data=dat, na.action=na_action,...)
-    m <- rpart::prune(m,cp[p])
-    if (is.numeric(dat[,p])){
-      res <- get_res(nmiss = sum(ina),residuals = residuals(m), type=add_residual)
-      dat[ina,p] <- predict(m,dat[ina,,drop=FALSE]) + res
-    } else if (is.logical(dat[,p])){
-      dat[ina,p] <- as.logical(predict(m, dat[ina,,drop=FALSE]))
+
+  # Iterate over target variables to impute each of them.
+  for (p in predicted) {
+    # Get logical vector for rows to impute.
+    i <- if (impute_all) rep(TRUE, nrow(dat)) else is.na(dat[, p])
+    if (!any(i)) {
+      next  # Skip if nothing to impute.
+    }
+
+    # Build model for p and use it to impute dat[i, p].
+    p_formula <- as.formula(paste(p, "~" , deparse(formula[[3]])))
+    m <- run_model(rpart, formula = p_formula, data = dat, na.action = na_action, ...)
+    m <- rpart::prune(m, cp[p])
+    if (is.numeric(dat[, p])){
+      res <- get_res(nmiss = sum(i), residuals = residuals(m), type = add_residual)
+      dat[i, p] <- predict(m, dat[i, , drop = FALSE]) + res
+    } else if (is.logical(dat[, p])){
+      dat[i, p] <- as.logical(predict(m, dat[i, , drop = FALSE]))
     } else { 
-      dat[ina,p] <- predict(m, dat[ina,,drop=FALSE],type="class")
+      dat[i, p] <- predict(m, dat[i, , drop = FALSE], type="class")
     }
   }
   dat
@@ -120,44 +131,44 @@ cart_work <- function(dat, formula, add_residual, cp, na_action, ...){
 #' 
 #' @export
 impute_rf <- function(dat, formula, add_residual = c("none","observed","normal")
-                      , na_action=na.omit
-                      , ...){
+                      , na_action=na.omit, impute_all=FALSE, ...){
   if (not_installed("randomForest")) return(dat)
   stopifnot(inherits(formula,"formula"))
   add_residual <- match.arg(add_residual)
-  do_by(dat, groups(dat,formula), .fun=rf_work
-    , formula=remove_groups(formula), add_residual=add_residual, na_action=na_action,...)
+  do_by(dat, groups(dat,formula), .fun=rf_work, formula=remove_groups(formula)
+    , add_residual=add_residual, na_action=na_action, impute_all=impute_all, ...)
 }
 
-rf_work <- function(dat, formula, add_residual = c("none","observed","normal"), na_action, ...){
-  stopifnot(inherits(formula,"formula"))
+rf_work <- function(dat, formula, add_residual, na_action, impute_all, ...){
   
   predictors <- get_predictors(formula, dat)
   predicted <- get_imputed(formula, dat)
-  # we need to work around a formula-handling bug in 'randomForest <= 4.6-12' 
-  # (the ". - x" case is not handled correctly)
-  # The following should work when randomForest gets updated.
-  # formulas <- paste(predicted, "~" ,deparse(formula[[3]]) )
-  
-  for ( i in seq_along(predicted) ){
-    p <- predicted[i]
-    cc <- complete.cases(dat[c(p,predictors)])
-    ipredictors <- setdiff(predictors, predicted[i])
-    frm <- paste(predicted[i], " ~ ",paste(ipredictors,collapse=" + ") )
-    m <- run_model(randomForest::randomForest
-           , formula=as.formula(frm)
-           , data=dat, na.action=na_action, ...)
-    ina <- is.na(dat[,p])
-    dat[ina,p] <- predict(m, newdata=dat[ina,,drop=FALSE])
-    if (is.numeric(dat[,p]) && add_residual != "none"){
-      res <- get_res(nmiss=sum(ina), residuals = dat[cc,p]-predict(m), type=add_residual)
-      dat[ina,p] <- dat[ina,p] + res
+
+  # Iterate over target variables to impute each of them.
+  for (p in predicted) {
+    # Get logical vector for rows to impute.
+    i <- if (impute_all) rep(TRUE, nrow(dat)) else is.na(dat[, p])
+    if (!any(i)) {
+      next  # Skip if nothing to impute.
+    }
+
+    # Build model for p and use it to impute dat[i, p].
+    # We need to work around a formula-handling bug in 'randomForest <= 4.6-12' 
+    # (the ". - x" case is not handled correctly).
+    # The following should work when randomForest gets updated.
+    # p_formula <- as.formula(paste(p, " ~ ", deparse(formula[[3]])))
+    p_predictors <- setdiff(predictors, p)
+    p_formula <- as.formula(paste(p, " ~ ", paste(p_predictors, collapse=" + ")))
+    m <- run_model(randomForest::randomForest, formula = p_formula, data = dat, na.action = na_action, ...)
+    predicted_values <- predict(m, newdata = dat[i, , drop = FALSE])
+    if (is.numeric(dat[, p]) && add_residual != "none") {
+      cc <- complete.cases(dat[c(p, predictors)])
+      cc_residuals <- dat[cc, p] - predict(m, newdata = dat[cc, , drop = FALSE])
+      res <- get_res(nmiss = sum(i), residuals = cc_residuals, type = add_residual)
+      dat[i, p] <- predicted_values + res
+    } else {
+      dat[i, p] <- predicted_values
     }
   }
   dat
 }
-
-
-
-
-

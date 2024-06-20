@@ -423,8 +423,8 @@ multi_shd <- function(x){
 
 #' @rdname impute_hotdeck
 #' @param predictor \code{[function]} Imputation to use for predictive part in
-#'   predictive mean matching. Any of the \code{impute_} functions of this
-#'   package (it makes no sense to use a hot-deck imputation).
+#'   predictive mean matching. Any \code{impute_} function of this package that
+#'   supports the \code{impute_all} argument can be used.
 #' 
 #' @export
 impute_pmm <- function(dat, formula, predictor=impute_lm
@@ -432,6 +432,14 @@ impute_pmm <- function(dat, formula, predictor=impute_lm
   
   # input check
   stopifnot(inherits(formula,"formula"))
+  is_valid_predictor <- "impute_all" %in% names(formals(predictor))
+  if (!is_valid_predictor) {
+    error_fmt <- paste(
+      "Cannot use '%s' as predictor for predictive mean matching."
+      , "Predictor function must support the 'impute_all' argument."
+    )
+    stopf(error_fmt, deparse(substitute(predictor)))
+  }
   pool <- match.arg(pool)
 
   # generate predictions by imputing with the 'predictor' function.
@@ -444,70 +452,119 @@ pmm_work <- function(dat, formula, predictor=impute_lm
                        , pool=c('complete','univariate','multivariate'), ...){
   
   # generate predictions by imputing with the 'predictor' function.
-  idat <- predictor(dat=dat,formula=formula,...)
+  idat <- predictor(dat = dat, formula = formula, impute_all = TRUE, ...)
   predicted <- get_imputed(formula, dat)
-  predicted <- names(dat) %in% predicted
+
   # call appropriate workhorse imputation function
   switch(pool
      , complete = multi_cc_pmm(dat,idat,predicted, TRUE)
      , univariate = single_pmm(dat,idat,predicted)
      , multivariate = multi_cc_pmm(dat,idat,predicted,FALSE)
   )
-  
 }
-
-
-
 
 # dat: original data
 # idat: formula-imputed data
-# predicted [logical] which variables have been imputed
-single_pmm <- function(dat, idat, predicted){
-  for ( p in which(predicted) ){
-    don <- dat[!is.na(dat[,p]),p]
-    iimp <- is.na(dat[,p]) & !is.na(idat[,p])
-    if ( length(don)==0 || sum(iimp)==0) next # no donors, or nothing to impute
-    idat[iimp,p] <- .Call("pmm_impute_dbl",as.double(idat[iimp,p]),as.double(don))
+# predicted [character]: variables imputed in idat
+single_pmm <- function(dat, idat, predicted) {
+  for (p in predicted) {
+    is_na_dat <- is.na(dat[, p])
+    is_na_idat <- is.na(idat[, p])
+    # Get logical vectors with donor and recipient rows.
+    # Note that idat[, p] can have missings in records where dat[, p] does not.
+    # Such records should not be selected as donor. This can be handled when
+    # calculating the distance between imputed recipient and potential donor,
+    # but it is more robust to exclude these records from the donor pool here.
+    is_donor_row <- !is_na_dat & !is_na_idat
+    is_recipient_row <- is_na_dat & !is_na_idat
+    if (!any(is_donor_row) || !any(is_recipient_row)) {
+      next  # No donors or nothing to impute.
+    }
+    # For each recipient, get index of closest donor using gower_topn().
+    # Note that gower_topn() cannot handle the variable p having 0 range.
+    closest_donor_idx <- if (calc_range(idat[, p]) == 0) {
+      # Impute the first donor value. This is consistent with the behaviour of
+      # gower_topn(), which returns the lowest index of equal values (for n=1).
+      1
+    } else {
+      gower::gower_topn(idat[is_recipient_row, p, drop = FALSE]
+                        , idat[is_donor_row, p, drop = FALSE]
+                        , n = 1L)$index
+    }
+    # Translate donor indices to indices in the full data set.
+    j <- which(is_donor_row)[closest_donor_idx]
+    # Impute donor values into recipients.
+    dat[is_recipient_row, p] <- dat[j, p]
   } 
-  idat
+  dat
 }
 
 # dat: original data
 # idat: formula-imputed data
-# predicted [logical] which variables have been imputed
-# only_complete:[logical] TRUE: complete cases only, FALSE: by missingness pattern
-# (only_complete=FALSE)
-multi_cc_pmm <- function(dat, idat, predicted, only_complete=TRUE){
-  M <- is.na(dat) & !is.na(idat)
+# predicted [character]: variables imputed in idat
+# only_complete [logical]: TRUE: complete cases only, FALSE: by missingness pattern
+multi_cc_pmm <- function(dat, idat, predicted, only_complete = TRUE) {
+  is_na_dat <- is.na(dat)
+  is_na_idat <- is.na(idat)
+  # Get positions of missings in dat that have been imputed in idat.
+  # These are the positions where we want to impute values with pmm.
+  # Note that idat only differs from dat in predicted variables, meaning that
+  # all values of M outside of predicated variables are FALSE.
+  M <- is_na_dat & !is_na_idat
   # get missing data patterns 
   mdp <- unique(M)
+  # Transpose of M is used to find rows that match a missing data pattern.
   M <- t(M)
-  imputed <- logical(nrow(dat))
-  if (only_complete) donor_pool <- complete.cases(dat[predicted])
-  for ( i in seq_len(nrow(mdp))){
+  # Get positions of potential donor values.
+  is_donor_val <- !is_na_dat & !is_na_idat
+  if (only_complete) {
+    # Donors are rows of the data that are complete for all predicted vars.
+    is_donor_row <- rowSums(is_donor_val[, predicted, drop = FALSE]) == length(predicted)
+  }
+  for (i in seq_len(nrow(mdp))) {
     # get missing data pattern for imputed variables
     pat <- mdp[i,]
-    # skip if that leaves us with nothing
-    if (!any(pat)) next
-    # only donors that have not been imputed earlier
-    if(!only_complete) donor_pool <- complete.cases(dat[pat]) & !imputed
-    # no donors or nothing to impute: skip.
-    if (!any(donor_pool)||all(donor_pool)) next 
-    # recycle over columns of M to find recipients with pattern 'pat'
-    recipients <- colSums(M==pat) == length(pat)
-    # get closest match (scaled L1 distance)
-    topn <- gower::gower_topn(idat[recipients,pat,drop=FALSE]
-                  , dat[donor_pool,pat,drop=FALSE], n=1L)
-    # index from donor pool to actual dataset
-    j <- which(donor_pool)[topn$index]
-    # impute the bastard; update imputation administration
-    dat[recipients,pat] <- dat[j,pat]
-    imputed <- imputed | recipients
+    if (!any(pat)) {
+      next  # No missings in pattern, nothing to impute.
+    }
+    if (!only_complete) {
+      # Donors are rows of the data that are complete for pat.
+      is_donor_row <- rowSums(is_donor_val[, pat, drop = FALSE]) == sum(pat)
+    }
+    if (!any(is_donor_row)) {
+      next  # Cannot impute without donors.
+    }
+    # Recipient rows are those rows of the data that match pat.
+    is_recipient_row <- colSums(M == pat) == length(pat)
+    # For each recipient, get index of closest donor using gower_topn().
+    # Note that gower_topn() cannot handle all variables in pat having 0 range.
+    is_range_0 <- (sapply(idat[, pat, drop = FALSE], calc_range) == 0)
+    closest_donor_idx <- if (all(is_range_0)) {
+      # Impute the first donor value. This is consistent with the behaviour of
+      # gower_topn(), which returns the lowest index of equal values (for n=1).
+      1
+    } else {
+      gower::gower_topn(idat[is_recipient_row, pat, drop = FALSE]
+                        , idat[is_donor_row, pat, drop = FALSE]
+                        , n = 1L)$index
+    }
+    # Translate donor indices to indices in the full data set.
+    j <- which(is_donor_row)[closest_donor_idx]
+    # Impute donor values into recipients.
+    dat[is_recipient_row, pat] <- dat[j, pat]
   }
   dat
 }
 
-
+# Calculate the range of a vector v, i.e., the difference between max and min.
+# Note that v is assumed to have at least one non-NA value.
+calc_range <- function(v) {
+  range <- max(v, na.rm = TRUE) - min(v, na.rm = TRUE)
+  if (!is.finite(range)) {
+    stop("Failed to calculate range.")
+  }
+  range
+}
 
 
 # ------------------------------------------------------------------------------
