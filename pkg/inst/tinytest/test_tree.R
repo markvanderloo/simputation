@@ -42,6 +42,16 @@ expect_true( !any(is.na(impute_cart(dat, x + y~p, cp=0.01))[,'x'] ) )
 expect_error( impute_cart(dat, x + y + z ~ p, cp=c(0.01,0.1))[,'x']  ) 
 expect_true( !any(is.na(impute_cart(dat, x + y~p, cp=rep(0.01,2)))[,'x'] ) ) 
 
+# Test impute_all = TRUE
+dat <- iris[1:10, ]
+dat[1:2,1] <- NA 
+expected_result <- dat
+expected_result[1:2,1] <- 4.825
+expect_equal(impute_cart(dat, Sepal.Length ~ Sepal.Width), expected_result)
+expected_result <- dat
+expected_result[ ,1] <- 4.825
+expect_equal(impute_cart(dat, Sepal.Length ~ Sepal.Width, impute_all = TRUE), expected_result)
+
 
 if (requireNamespace("randomForest",quietly = TRUE)){
   ## RandomForest imputation
@@ -70,3 +80,16 @@ if (requireNamespace("randomForest",quietly = TRUE)){
   expect_true(impute_rf(dat, x ~ y|z)[2,1] < impute_rf(dat, x ~ y)[2,1])
 }
 
+# Test impute_all = TRUE
+dat <- iris[1:10, ]
+dat[1:2,1] <- NA 
+expected_result <- dat
+expected_result[1:2,1] <- c(4.831, 4.567)
+set.seed(0)
+result <- impute_rf(dat, Sepal.Length ~ Sepal.Width)
+expect_equal(result, expected_result, tolerance = 1e-2)
+expected_result <- dat
+expected_result[ ,1] <- c(4.831, 4.567, 4.720, 4.721, 4.977, 5.191, 4.811, 4.811, 4.567, 4.721)
+set.seed(0)
+result <- impute_rf(dat, Sepal.Length ~ Sepal.Width, impute_all = TRUE)
+expect_equal(result, expected_result, tolerance = 1e-2)

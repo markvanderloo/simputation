@@ -1,8 +1,6 @@
 *.pdf
 *.html
 pkg/man
-pkg/src/*.so
-pkg/src/*.o
 
 output/*
 
